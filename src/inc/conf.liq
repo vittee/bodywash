@@ -1,4 +1,4 @@
-def conf.parse(file)
+def conf.load(file)
     regex = "(\r\n|\r|\n)"
     lines = list.filter(fun(l) -> l != "" and not string.match(pattern=regex, l), string.split(separator=regex, file.contents(file)))
 

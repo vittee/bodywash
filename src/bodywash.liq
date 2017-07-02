@@ -14,8 +14,8 @@ if not file.exists(conf_file) then
     shutdown()
 end
 
-conf = conf.parse(conf_file)
 multi = playlist.multi(id="multi", conf("playlists"))
+conf = conf.load(conf_file)
 
 main = multi
 output.portaudio(id="outout", mksafe(main))
