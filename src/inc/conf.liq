@@ -22,3 +22,11 @@ def conf.load(file)
 
     fun(n) -> list.map(fun(f) -> snd(f), list.filter(fun(f) -> fst(f) == n, fp))
 end
+
+def conf.playlists(conf)
+    conf("playlists")
+end
+
+def conf.sequence(conf)
+    list.map(fun(kv) -> (fst(kv), float_of_string(snd(kv))), conf("sequence"))
+end
