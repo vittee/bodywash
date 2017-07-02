@@ -6,12 +6,12 @@
 conf_file = argv(1)
 if string.length(conf_file) == 0 then
     print.red("No configuration file specified.")
-    shutdown()
+    exit(1)
 end
 
 if not file.exists(conf_file) then
     print.red("Configuration file was not found.")
-    shutdown()
+    exit(1)
 end
 
 conf = conf.load(conf_file)
