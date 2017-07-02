@@ -39,6 +39,29 @@ multi =
         multi
     end
 
-xfader = smart_crossfade(start_next=3.5,fade_in=0.,medium=-22.0,margin=5.0,eat_blank(at_beginning=true,max_blank=0.5,multi))
+def quick_crossfade(~start_next=5.,~fade_out=3.,~high=-15., ~medium=-32., ~margin=4.,~width=2.,~conservative=true,s)
+  fout = fade.out(type="sin",duration=fade_out)
+  add = fun (a,b) -> add(normalize=false,[b, a])
+  log = log(label="quick_crossfade")
+
+  def transition(a,b,ma,mb,sa,sb)
+    if (a <= medium and b <= medium and abs(a - b) <= margin) or (b >= a + margin and a >= medium and b <= high) then
+      log("Transition: crossed, fade-out.")
+      add(fout(sa),sb)
+
+    elsif (a >= b + margin and b >= medium and a <= high) or (b >= a + margin and a <= medium and b <= high) then
+      log("Transition: crossed, no fade.")
+      add(sa,sb)
+
+    else
+      log("Transition: crossed, force fade-out")
+      add(fade.out(type="exp", duration=fade_out,sa), sb)
+    end
+  end
+
+  smart_cross(width=width, duration=start_next, conservative=conservative, transition, s)
+end    
+
+xfader = quick_crossfade(start_next=3.5,medium=-22.0,margin=5.0,eat_blank(at_beginning=true,max_blank=0.5,multi))
 main = mksafe(sequence([blank(duration=1.0),xfader],merge=true))
 output.portaudio(id="output", main)
