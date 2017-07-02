@@ -1,8 +1,13 @@
 # Bodywash
 
-%include "inc/ansi.liq"
+set("log.stdout", true)
+%include "boostrap.liq"
 
-print.red("Hello")
+multi = playlist.multi(id="multi", 
+    [
+        ("chill", "/Volumes/Data/Musics/liq/chill")        
+    ]
+)
 
-main = sine(440.0)
-output.portaudio(id="outout", main)
+main = multi
+output.portaudio(id="outout", mksafe(main))
