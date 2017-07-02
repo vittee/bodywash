@@ -1,2 +1,2 @@
 #!env sh
-liquidsoap src/bodywash.liq $@
+liquidsoap src/bodywash.liq -- $@
