@@ -41,4 +41,4 @@ multi =
 
 xfader = smart_crossfade(start_next=3.5,fade_in=0.,medium=-22.0,margin=5.0,eat_blank(at_beginning=true,max_blank=0.5,multi))
 main = mksafe(sequence([blank(duration=1.0),xfader],merge=true))
-output.portaudio(id="outout", main)
+output.portaudio(id="output", main)
