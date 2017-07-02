@@ -23,6 +23,10 @@ def conf.load(file)
     fun(n) -> list.map(fun(f) -> snd(f), list.filter(fun(f) -> fst(f) == n, fp))
 end
 
+def conf.settings(conf)
+    conf("settings")    
+end
+
 def conf.playlists(conf)
     conf("playlists")
 end
