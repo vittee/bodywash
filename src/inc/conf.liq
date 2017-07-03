@@ -1,6 +1,11 @@
 def conf.load(file)
     regex = "(\r\n|\r|\n)"
-    lines = list.filter(fun(l) -> l != "" and not string.match(pattern=regex, l), string.split(separator=regex, file.contents(file)))
+    lines = list.filter(
+        fun(l) -> begin
+            l != "" and not string.match(pattern=regex, l) and (string.sub(l, start=0, length=1) != "#")
+        end,
+        string.split(separator=regex, file.contents(file))
+    )
 
     name = ref ""
 
