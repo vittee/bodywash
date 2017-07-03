@@ -2,6 +2,7 @@
 %include "boostrap.liq"
 
 set("log.stdout", true)
+set("server.telnet", true)
  
 conf_file = argv(1)
 if string.length(conf_file) == 0 then
@@ -39,29 +40,51 @@ multi =
         multi
     end
 
-def quick_crossfade(~start_next=5.,~fade_out=3.,~high=-15., ~medium=-32., ~margin=4.,~width=2.,~conservative=true,s)
-  fout = fade.out(type="sin",duration=fade_out)
-  add = fun (a,b) -> add(normalize=false,[b, a])
-  log = log(label="quick_crossfade")
+def gapless(s)
+  ending = ref false
+
+  sb = on_blank(max_blank=0.7, threshold=-36.0, {
+    print.yellow("on blank #{ending}")
+    if !ending then
+      source.skip(s)
+    end
+  }, s)
+
+  se = on_end(delay=3.5, fun(f, m) -> begin
+    print.cyan("on end")
+    ending := true
+  end, sb)
+
+  st = on_track(fun(m) -> begin
+    print.green("on track")
+    ending := false
+  end, se)
+
+  high = -10.0
+  medium = -30.0
+  margin = 4.0
+
+  add = fun(a,b) -> add(normalize=false,[b,a])
+  fout = fade.out(type="exp",duration=4.5)
+  add.out = fun(a,b) -> add(fout(a), b)
 
   def transition(a,b,ma,mb,sa,sb)
-    if (a <= medium and b <= medium and abs(a - b) <= margin) or (b >= a + margin and a >= medium and b <= high) then
-      log("Transition: crossed, fade-out.")
-      add(fout(sa),sb)
-
-    elsif (a >= b + margin and b >= medium and a <= high) or (b >= a + margin and a <= medium and b <= high) then
-      log("Transition: crossed, no fade.")
-      add(sa,sb)
-
-    else
-      log("Transition: crossed, force fade-out")
-      add(fade.out(type="exp", duration=fade_out,sa), sb)
-    end
+      if a <= medium and b <= medium and abs(a - b) <= margin then
+        add.out(sa, sb)
+      elsif b >= a + margin and a >= medium and b <= high then        
+        add.out(sa, sb)
+      elsif a >= b + margin and b >= medium and a <= high then
+        add(sa,sb)
+      elsif b >= a + margin and a <= medium and b <= high then
+        add(sa,sb)
+      else
+        add.out(sa, sb)
+      end
   end
 
-  smart_cross(width=width, duration=start_next, conservative=conservative, transition, s)
-end    
+  smart_cross(transition, width=2.0, duration=3.5, eat_blank(at_beginning=true,st))
+end
 
-xfader = quick_crossfade(start_next=3.5,medium=-22.0,margin=5.0,eat_blank(at_beginning=true,max_blank=0.5,multi))
-main = mksafe(sequence([blank(duration=1.0),xfader],merge=true))
-output.portaudio(id="output", main)
+xfader = gapless(multi)
+main = mksafe(xfader)
+output.portaudio(id="output", buflen=4096, main)
