@@ -87,4 +87,4 @@ end
 
 xfader = gapless(multi)
 main = mksafe(xfader)
-output.portaudio(id="output", buflen=4096, main)
+output.ao(id="output", fallible=true, main)
