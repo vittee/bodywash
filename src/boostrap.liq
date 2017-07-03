@@ -2,3 +2,4 @@
 %include "inc/conf.liq"
 %include "inc/settings.liq"
 %include "inc/multi.liq"
+%include "inc/gapless.liq"
