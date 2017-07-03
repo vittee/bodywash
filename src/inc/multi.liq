@@ -44,8 +44,8 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
               []
           end
           
-      randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)
-      ref list.filter(string.match(pattern="(flac|mp3)$"), randomized)
+      randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)     
+      ref list.filter(string.match(pattern=!_audio_regex), randomized)
   end
 
   def circulate_sequences()
