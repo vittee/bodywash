@@ -3,3 +3,4 @@
 %include "inc/settings.liq"
 %include "inc/multi.liq"
 %include "inc/gapless.liq"
+%include "inc/replaygain.liq"

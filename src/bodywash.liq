@@ -24,18 +24,7 @@ multi = playlist.multi(id="multi", conf.playlists(conf), sequence=conf.sequence(
 multi = 
     if s.bool("replay_gain") then
         enable_replaygain_metadata()
-
-        replay_gain = map_metadata(fun(m) -> begin
-            if list.mem_assoc("replay_gain", m) then
-                matches = string.extract(pattern="(.+)\s*dB", m["replay_gain"])
-                dB = float_of_string(string.trim(matches["1"])) + 6.0
-                list.append([("maximized_replay_gain", "#{dB_of_lin(lin_of_dB(dB))} dB")], m)
-            else
-                m
-            end
-        end, multi)
-
-        amplify(1.0, replay_gain, override="maximized_replay_gain")
+        replaygain(multi)
     else
         multi
     end
