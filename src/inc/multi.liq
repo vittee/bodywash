@@ -31,9 +31,10 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
 
   all_playlists = ref [('',ref [])] # multable map, k:string, v:mutable list # `v` is file list.
 
-  sequence_started_at = ref 0.;
+  sequence_started_at = ref 0.
   pl_sequences = ref [(ref [], 0.)] # mutable list of, pair<filelist, duration>
   cur_seq = ref (ref [], 0.) # reference to current pair<filelist, duration>
+  item_cursor = ref 0
 
   def load_uri(uri)
       files = 
@@ -53,8 +54,10 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
     pl_sequences := list.tl(list.append(!pl_sequences, [!cur_seq]))
     cur_seq := list.hd(!pl_sequences, default=(ref [], 0.))
     sequence_started_at := gettimeofday()
+    item_cursor := 0
   end  
 
+  next_tried = ref 0
   def rec next()
     duration = (gettimeofday() - !sequence_started_at) / 60.
     seq_limit = snd(!cur_seq)
@@ -68,12 +71,9 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
     ref_files = fst(!cur_seq)
     file = 
       if list.length(!ref_files) > 0 then
-        selected = list.hd(!ref_files, default="")
-        ref_files := list.tl(!ref_files) # remove head, tail remains
-        if selected != "" then
-          log("Selected: #{selected}")
-          ref_files := list.append(!ref_files, [selected])
-        end
+        index = !item_cursor
+        selected = list.nth(!ref_files, index, default="")
+        item_cursor := (index + 1) mod list.length(!ref_files)
         selected
       else
         # this should never happen
@@ -84,7 +84,13 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
     if notdup(backlog=artist_backlog, size=!backlog_size, request.metadata(req)) then      
       req
     else
-      next()
+      next_tried := !next_tried + 1
+      if !next_tried < !backlog_size then
+        next()
+      else
+        # Don't know what to do here, simply allow duplicates.
+        req
+      end
     end
   end  
 
