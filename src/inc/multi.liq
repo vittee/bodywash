@@ -23,7 +23,7 @@ def notdup(~meta_key="artist",~size=20,~backlog,m)
     end
 end
 
-def playlist.multi(~id="",~sequence=[],~size=20, uris)
+def playlist.multi(~id=,~sequence=[],~size=20, uris)
   log = log(label="playlist.multi")
 
   artist_backlog = ref []
@@ -35,7 +35,7 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
   pl_sequences = ref [(ref [], 0.)] # mutable list of, pair<filelist, duration>
   current_seq = ref (ref [], 0.) # reference to current pair<filelist, duration>
   seq_cursor = ref 0
-  item_cursor = ref 0
+  item_counter = ref 0
 
   def load_uri(uri)
       files = 
@@ -46,19 +46,27 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
             []
         end
           
-      randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)     
+      randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)
       ref list.filter(string.match(pattern=!_audio_regex), randomized)
   end
 
-  def circulate_sequences()
+  def circulate_sequences(~reshuffle=false)
     log("Circulate sequences.")
-    # pl_sequences := list.tl(list.append(!pl_sequences, [!current_seq]))
-    # current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
-    index = !seq_cursor
-    current_seq := list.nth(!pl_sequences, index, default=(ref [], 0.))
-    seq_cursor := (index + 1) mod list.length(!pl_sequences)
+
+    if reshuffle then
+      list = fst(!current_seq)
+      d = snd(!current_seq)
+
+      list = list.sort(fun (x,y) -> int_of_float(random.float()), !list)
+
+      current_seq := (ref list, d)
+    end
+
+    pl_sequences := list.tl(list.append(!pl_sequences, [!current_seq]))
+    current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
+
     sequence_started_at := gettimeofday()
-    item_cursor := 0
+    item_counter := 0
   end  
 
   next_tried = ref 0
@@ -69,33 +77,31 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
     log("Playlist played for #{duration}, Sequence Limit = #{seq_limit}")
 
     if duration >= seq_limit then
-      circulate_sequences()
+      circulate_sequences() 
+    elsif !item_counter >= list.length(!fst(!current_seq)) then
+      print.red("Playlist loop, move to next playlist.")
+      circulate_sequences(reshuffle=true)
     end
 
-    def rec pick()
-      ref_files = fst(!current_seq)
+    ref_files = fst(!current_seq)      
 
-      print.yellow("pick from #{!ref_files}")
-
+    file =
       if list.length(!ref_files) > 0 then
-        index = !item_cursor
-        selected = list.nth(!ref_files, index, default="")
+        selected = list.hd(!ref_files, default="")
+        ref_files := list.tl(!ref_files) # remove head, tail remains
+        if selected != "" then
+          log("Selected: #{selected}")
+          ref_files := list.append(!ref_files, [selected])
+        end
 
-        if index >= list.length(!ref_files) then
-          print.red("End of list, circulate.")
-          circulate_sequences()
-          pick()
-        else
-          item_cursor := index + 1
-          selected
-        end        
+        item_counter := !item_counter + 1
+
+        selected       
       else
         # this should never happen
         ""
-      end
-    end
+      end 
 
-    file = pick()
     req = request.create(file)
     
     result = if notdup(backlog=artist_backlog, size=!backlog_size, request.metadata(req)) then
