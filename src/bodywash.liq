@@ -21,6 +21,8 @@ s.int = settings.int(settings)
 s.bool = settings.bool(settings)
 
 multi = playlist.multi(id="multi", conf.playlists(conf), sequence=conf.sequence(conf), size=s.int("backlog_size", default=20))
+add_skip_command(multi)
+
 multi = 
     if s.bool("replay_gain") then
         enable_replaygain_metadata()
@@ -30,5 +32,6 @@ multi =
     end
 
 xfader = gapless(multi)
-main = mksafe(xfader)
-output.ao(id="output", fallible=true, main)
+main = mksafe(mix(id="mixer", [xfader]))
+
+output.ao(id="output", fallible=true, on_start=fun() -> ignore(server.execute("mixer.select 0 true")), main)
