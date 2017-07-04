@@ -29,11 +29,12 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
   artist_backlog = ref []
   backlog_size = ref size
 
-  all_playlists = ref [('',ref [])] # multable map, k:string, v:mutable list # `v` is file list.
+  all_playlists = ref [('',ref [])] # mutable map, k:string, v:mutable list # `v` is file list.
 
   sequence_started_at = ref 0.
   pl_sequences = ref [(ref [], 0.)] # mutable list of, pair<filelist, duration>
-  cur_seq = ref (ref [], 0.) # reference to current pair<filelist, duration>
+  current_seq = ref (ref [], 0.) # reference to current pair<filelist, duration>
+  seq_cursor = ref 0
   item_cursor = ref 0
 
   def load_uri(uri)
@@ -41,7 +42,7 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
           if file.is_directory(uri) then
               get_process_lines("find #{quote(uri)} -type f | sort")
           else 
-              # TODO: Resolve playlist
+              # TODO: Resolve playlist file
               []
           end
           
@@ -51,8 +52,11 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
 
   def circulate_sequences()
     log("Circulate sequences.")
-    pl_sequences := list.tl(list.append(!pl_sequences, [!cur_seq]))
-    cur_seq := list.hd(!pl_sequences, default=(ref [], 0.))
+    # pl_sequences := list.tl(list.append(!pl_sequences, [!current_seq]))
+    # current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
+    index = !seq_cursor
+    current_seq := list.nth(!pl_sequences, index, default=(ref [], 0.))
+    seq_cursor := (index + 1) mod list.length(!pl_sequences)
     sequence_started_at := gettimeofday()
     item_cursor := 0
   end  
@@ -60,7 +64,7 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
   next_tried = ref 0
   def rec next()
     duration = (gettimeofday() - !sequence_started_at) / 60.
-    seq_limit = snd(!cur_seq)
+    seq_limit = snd(!current_seq)
 
     log("Playlist played for #{duration}, Sequence Limit = #{seq_limit}")
 
@@ -68,30 +72,50 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
       circulate_sequences()
     end
 
-    ref_files = fst(!cur_seq)
-    file = 
+    def rec pick()
+      ref_files = fst(!current_seq)
+
       if list.length(!ref_files) > 0 then
         index = !item_cursor
         selected = list.nth(!ref_files, index, default="")
-        item_cursor := (index + 1) mod list.length(!ref_files)
-        selected
+
+        if index >= list.length(!ref_files) then
+          print.red("End of list, circulate.")
+          circulate_sequences()
+          pick()
+        else
+          item_cursor := index + 1
+          selected
+        end        
       else
         # this should never happen
         ""
       end
+    end
 
+    file = pick()
     req = request.create(file)
-    if notdup(backlog=artist_backlog, size=!backlog_size, request.metadata(req)) then      
+    
+    result = if notdup(backlog=artist_backlog, size=!backlog_size, request.metadata(req)) then
+      next_tried := 0
       req
     else
-      next_tried := !next_tried + 1
+      print.red(!next_tried)
+      
       if !next_tried < !backlog_size then
+        log("Duplicate found, retry next.")
+        next_tried := !next_tried + 1
         next()
       else
-        # Don't know what to do here, simply allow duplicates.
+        # Don't know what to do here, simply allow duplicates.        
+        log("Can't find non-duplicated item.")
+        artist_backlog := []
+        next_tried := 0
         req
       end
     end
+
+    result
   end  
 
   all_playlists := list.map(
@@ -143,12 +167,12 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
   )
 
   if (total < !backlog_size) then
-    log("Adjust backlog_size")
-    backlog_size := total / 3
+    backlog_size := total
+    log("Adjust backlog_size to #{!backlog_size}")    
   end
 
   # Pick from sequence
-  cur_seq := list.hd(!pl_sequences, default=(ref [], 0.))
+  current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
   sequence_started_at := gettimeofday()
   request.dynamic(id=id, default_duration=5.0, length=5.0, next)
 end
