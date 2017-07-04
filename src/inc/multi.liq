@@ -23,7 +23,7 @@ def notdup(~meta_key="artist",~size=20,~backlog,m)
     end
 end
 
-def playlist.multi(~id=,~sequence=[],~size=20, uris)
+def playlist.multi(~id,~sequence=[],~size=20, uris)
   log = log(label="playlist.multi")
 
   artist_backlog = ref []
@@ -103,23 +103,21 @@ def playlist.multi(~id=,~sequence=[],~size=20, uris)
       end 
 
     req = request.create(file)
-    
-    result = if notdup(backlog=artist_backlog, size=!backlog_size, request.metadata(req)) then
+    meta = request.metadata(req)
+
+    result = if notdup(backlog=artist_backlog, size=!backlog_size, meta) then
       next_tried := 0
       req
-    else
-      print.red(!next_tried)
-      
+    else      
       if !next_tried < !backlog_size then
         log("Duplicate found, retry next.")
         next_tried := !next_tried + 1
         next()
-      else
-        # Don't know what to do here, simply allow duplicates.        
+      else     
         log("Can't find non-duplicated item.")
-        artist_backlog := []
-        next_tried := 0
-        req
+        # make some room and try again
+        artist_backlog := list.tl(!artist_backlog)
+        next()
       end
     end
 
