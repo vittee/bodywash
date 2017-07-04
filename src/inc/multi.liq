@@ -39,12 +39,12 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
 
   def load_uri(uri)
       files = 
-          if file.is_directory(uri) then
-              get_process_lines("find #{quote(uri)} -type f | sort")
-          else 
-              # TODO: Resolve playlist file
-              []
-          end
+        if file.is_directory(uri) then
+            get_process_lines("find #{quote(uri)} -type f | sort")
+        else 
+            # TODO: Resolve playlist file
+            []
+        end
           
       randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)     
       ref list.filter(string.match(pattern=!_audio_regex), randomized)
@@ -74,6 +74,8 @@ def playlist.multi(~id="",~sequence=[],~size=20, uris)
 
     def rec pick()
       ref_files = fst(!current_seq)
+
+      print.yellow("pick from #{!ref_files}")
 
       if list.length(!ref_files) > 0 then
         index = !item_cursor
