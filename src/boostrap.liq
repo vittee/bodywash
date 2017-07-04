@@ -1,3 +1,6 @@
+%include "inc/ansi.liq"
+%include "inc/utils.liq"
+
 def _audio_ext = ref [] end
 def _audio_regex = ref "" end
 
@@ -19,13 +22,13 @@ def boot()
     end
   end, decoders))
 
-  _audio_regex := "\.("^list.fold(fun(a,e) -> begin
-    a = if a != "" then a^"|" else a end
-    a^e 
-  end, "", !_audio_ext)^")$"
+  if list.length(!_audio_ext) == 0 then
+    _audio_ext := ["mp3", "ogg", "flac", "wav"]
+  end
+
+  _audio_regex := "\.(#{list.join(!_audio_ext,separator='|')})$"
 end
 
-%include "inc/ansi.liq"
 %include "inc/conf.liq"
 %include "inc/settings.liq"
 %include "inc/multi.liq"
