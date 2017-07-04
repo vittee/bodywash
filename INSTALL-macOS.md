@@ -4,7 +4,7 @@
 $ brew install pkg-config ocaml opam
 ```
 
-Once install,Iinitialize the `opam`
+Once install,Initialize the `opam`
 ```bash
 $ opam init
 ```
