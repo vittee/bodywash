@@ -32,6 +32,8 @@ multi =
     end
 
 xfader = gapless(multi)
-main = mksafe(mix(id="mixer", [xfader]))
+mixer = mix(id="mixer", [xfader])
+warmup = blank(duration=0.7)
+main = mksafe(sequence(merge=true,[warmup,mixer]))
 
 output.ao(id="output", fallible=true, on_start=fun() -> ignore(server.execute("mixer.select 0 true")), main)
