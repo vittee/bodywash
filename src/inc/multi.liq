@@ -29,10 +29,10 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   artist_backlog = ref []
   backlog_size = ref size
 
-  all_playlists = ref [('',ref [])] # mutable map, k:string, v:mutable list # `v` is file list.
+  all_playlists = ref [("",ref [])] # mutable map, k:string, v:mutable list # `v` is file list.
 
   sequence_started_at = ref 0.
-  pl_sequences = ref [(ref [], 0.)] # mutable list of, pair<filelist, duration>
+  pl_sequences = ref [("", 0.)] # mutable list of, pair<filelist, duration>
   seq_cursor = ref 0
   item_counter = ref 0
 
@@ -48,26 +48,44 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       ref list.filter(string.match(pattern=!_audio_regex), randomized)
   end
 
+  def playlists.lookup(name,list)
+    list.fold(fun(ret, item) -> begin
+        if list.length(!ret) == 0 then
+          if fst(item) == name then              
+            snd(item)
+          else
+            ret
+          end
+        else
+          ret
+        end
+      end,
+      ref [], list
+    )  
+  end
+
+  def playlists.of(name)
+    playlists.lookup(name, !all_playlists)
+  end
+
+  def playlists.shuffle(name)
+    pl = playlists.of(name)
+    pl := list.randomize(!pl)
+  end  
+
   def sequence.current()
-    list.hd(!pl_sequences, default=(ref [], 0.))
+    list.hd(!pl_sequences, default=("", 0.))
   end
 
   def sequence.circulate(~reshuffle=false)
     log("Circulate sequences.")
 
-    pl_sequences := list.rotate(!pl_sequences, default=(ref [], 0.))
-
-    print.green(pl_sequences)
+    pl_sequences := list.rotate(!pl_sequences, default=("", 0.))
 
     if reshuffle then
-      current_seq = sequence.current()
-
-      list = fst(current_seq)
-      d = snd(current_seq)
-
-      list := list.sort(fun (x,y) -> int_of_float(random.float()), !list)
-      print.cyan("Shuffled #{!list}")
-    end    
+      name = fst(sequence.current())
+      playlists.shuffle(name)
+    end
 
     sequence_started_at := gettimeofday()
     item_counter := 0
@@ -77,20 +95,22 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   def rec next()
     current_seq = sequence.current()
 
+    pl_name = fst(current_seq)
+    seq_timeout = snd(current_seq)
+    pl = playlists.of(pl_name)
+
     duration = (gettimeofday() - !sequence_started_at) / 60.
-    seq_limit = snd(current_seq)
+    log("Playlist played for #{duration}, Sequence Limit = #{seq_timeout}")
 
-    log("Playlist played for #{duration}, Sequence Limit = #{seq_limit}")
-
-    if duration >= seq_limit then
+    if duration >= seq_timeout then
       sequence.circulate()
-    elsif !item_counter >= list.length(!fst(current_seq)) then
-      print.red("Playlist loop, move to next playlist.")
+    elsif !item_counter >= list.length(!pl) then
+      log("Playlist looped #{!item_counter} time, move to next playlist.")
       sequence.circulate(reshuffle=true)      
     end
 
     current_seq = sequence.current()
-    ref_files = fst(current_seq)
+    ref_files = playlists.of(fst(current_seq))
 
     file =
       if list.length(!ref_files) > 0 then
@@ -128,61 +148,65 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     end
   end
 
-  all_playlists := list.map(
-    fun(item) -> begin
-      (fst(item),load_uri(snd(item)))
-    end,
-    uris
-  )
-  total = list.fold(
-    fun(sum,item) -> begin
-      sum+list.length(!snd(item))
-    end,
-    0,
-    !all_playlists
-  )
-
-  log("Total files: #{total}")
-
-  def playlists.of(name)
-    ret = ref []
-
-    list.iter(
+  def load_playlists()
+    new_playlists = list.map(
       fun(item) -> begin
-        if list.length(!ret) == 0 then
-          if fst(item) == name then
-            ret := !snd(item)
-          end
-        end
+        (fst(item),load_uri(snd(item)))
       end,
+      uris
+    )
+
+    all_playlists := list.fold(fun(a,e) -> begin      
+      name = fst(e)
+      new = !snd(e)
+      
+      a = if list.mem_assoc(name, a) then
+        ref_old = playlists.lookup(name, a)
+        diff = list.diff(!ref_old, new)
+        ref_old := list.filter(file.exists, list.append(!ref_old, list.randomize(diff)))
+
+        list.push(list.remove_assoc(name, a), (name, ref_old))
+      else
+        list.append(a, [e])
+      end
+
+      list.remove_assoc("",a)
+    end, !all_playlists, new_playlists)
+
+    total = list.fold(
+      fun(sum,item) -> begin
+        sum+list.length(!snd(item))
+      end,
+      0,
       !all_playlists
     )
 
-    ret
+    log("Total files: #{total}")
+
+    backlog_size := 
+      if (total < size) then        
+        total
+      else
+        size
+      end    
+    
+    log("New backlog_size = #{!backlog_size}")
   end
 
-  # Build list of playlists [(ref [file], float)]
-  pl_sequences := list.map(
-    fun(seq) -> begin
-      name = fst(seq)
-      duration = snd(seq)
+  server.register("#{id}.reload", fun(s) -> begin
+    load_playlists()
+    "OK"
+  end)
 
-      (playlists.of(name), duration)
-    end,
+  load_playlists()
+
+  pl_sequences := 
     if list.length(sequence) > 0 then
       sequence
     else
       list.map(fun(p) -> (fst(p), 5.0), !all_playlists)
     end
-  )
 
-  if (total < !backlog_size) then
-    backlog_size := total
-    log("Adjust backlog_size to #{!backlog_size}")
-  end
-
-  # Pick from sequence
-  # current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
   sequence_started_at := gettimeofday()
   request.dynamic(id=id, default_duration=5.0, length=5.0, next)
 end
