@@ -261,10 +261,10 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
   sequence_started_at := gettimeofday()
 
-  s = request.dynamic(id=id, default_duration=5.0, length=5.0, next)
+  s = request.dynamic(default_duration=5.0, length=5.0, next)
 
   source.on_shutdown(s, save_dump)
-  on_track(fun(m) -> begin
+  on_track(id=id, fun(m) -> begin
     track_started_at := gettimeofday()
   end, s)
 end
