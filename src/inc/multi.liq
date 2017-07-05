@@ -35,6 +35,8 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   pl_sequences = ref [("", 0.)] # mutable list of, pair<filelist, duration>
   item_counter = ref 0
 
+  track_started_at = ref 0.
+
   def load_uri(uri)
       files =
         if file.is_directory(uri) then
@@ -204,6 +206,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     dump("[state]")
     dump("item_counter=#{!item_counter}")
     dump("duration="^string_of(gettimeofday() - !sequence_started_at))
+    dump("track_pos="^string_of(gettimeofday() - !track_started_at))
     dump("")
 
     dump("[backlog]")
@@ -257,5 +260,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   sequence_started_at := gettimeofday()
   s = request.dynamic(id=id, default_duration=5.0, length=5.0, next)
   source.on_shutdown(s, save_dump)
-  s
+  on_track(fun(m) -> begin
+    track_started_at := gettimeofday()
+  end, s)
 end
