@@ -52,7 +52,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   def playlists.lookup(name,list)
     list.fold(fun(ret, item) -> begin
         if list.length(!ret) == 0 then
-          if fst(item) == name then              
+          if fst(item) == name then
             snd(item)
           else
             ret
@@ -62,7 +62,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
         end
       end,
       ref [], list
-    )  
+    )
   end
 
   def playlists.of(name)
@@ -72,7 +72,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   def playlists.shuffle(name)
     pl = playlists.of(name)
     pl := list.randomize(!pl)
-  end  
+  end
 
   def sequence.current()
     list.hd(!pl_sequences, default=("", 0.))
@@ -107,7 +107,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       sequence.circulate()
     elsif !item_counter >= list.length(!pl) then
       log("Playlist looped #{!item_counter} time, move to next playlist.")
-      sequence.circulate(reshuffle=true)      
+      sequence.circulate(reshuffle=true)
     end
 
     current_seq = sequence.current()
@@ -119,7 +119,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
         selected = fst(shifted)
         ref_files := snd(shifted)
-        
+
         log("Selected: #{selected}")
 
         selected
@@ -157,10 +157,10 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       uris
     )
 
-    all_playlists := list.fold(fun(a,e) -> begin      
+    all_playlists := list.fold(fun(a,e) -> begin
       name = fst(e)
       new = !snd(e)
-      
+
       a = if list.mem_assoc(name, a) then
         ref_old = playlists.lookup(name, a)
         diff = list.diff(!ref_old, new)
@@ -184,23 +184,24 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
     log("Total files: #{total}")
 
-    backlog_size := 
-      if (total < size) then        
+    backlog_size :=
+      if (total < size) then
         total
       else
         size
-      end    
-    
+      end
+
     log("New backlog_size = #{!backlog_size}")
   end
 
   def save_dump()
     file = "plm.#{id}.dump"
     # Truncate
-    system("echo #{quote('# dump')} > #{file}")
+    system("echo #{quote('# Bodywash playlist.multi dump')} > #{file}")
 
+    buffer = ref ""
     def dump(s)
-      system("echo #{quote(s)} >> #{file}")
+      buffer := !buffer^"#{s}\n"      
     end
 
     dump("[state]")
@@ -226,7 +227,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     ignore(list.mapi(fun(i,e) -> begin
       dump("#{i}=#{fst(e)}")
     end, !all_playlists))
-    dump("")    
+    dump("")
 
     list.iter(fun(e) -> begin
       section = "[*p:#{fst(e)}]"
@@ -234,6 +235,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       dump("#{section}\n#{items}\n")
     end, !all_playlists)
 
+    system("echo #{quote(!buffer)} >> #{file}")
   end
 
   server.register("#{id}.reload", fun(s) -> begin
@@ -248,17 +250,19 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
   load_playlists()
 
-  pl_sequences := 
+  pl_sequences :=
     if list.length(sequence) > 0 then
       sequence
     else
       list.map(fun(p) -> (fst(p), 5.0), !all_playlists)
-    end  
+    end
 
   # TODO: Restore dump, if any
 
   sequence_started_at := gettimeofday()
+
   s = request.dynamic(id=id, default_duration=5.0, length=5.0, next)
+
   source.on_shutdown(s, save_dump)
   on_track(fun(m) -> begin
     track_started_at := gettimeofday()
