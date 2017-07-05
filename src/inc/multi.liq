@@ -33,7 +33,6 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
   sequence_started_at = ref 0.
   pl_sequences = ref [("", 0.)] # mutable list of, pair<filelist, duration>
-  seq_cursor = ref 0
   item_counter = ref 0
 
   def load_uri(uri)
@@ -193,9 +192,55 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     log("New backlog_size = #{!backlog_size}")
   end
 
+  def save_dump()
+    file = "plm.#{id}.dump"
+    # Truncate
+    system("echo #{quote('# dump')} > #{file}")
+
+    def dump(s)
+      system("echo #{quote(s)} >> #{file}")
+    end
+
+    dump("[state]")
+    dump("item_counter=#{!item_counter}")
+    dump("duration="^string_of(gettimeofday() - !sequence_started_at))
+    dump("")
+
+    dump("[backlog]")
+    ignore(list.mapi(fun(i,e) -> begin
+      dump("#{i}=#{e}")
+      0
+    end, !artist_backlog))
+    dump("")
+
+    dump("[sequence]")
+    ignore(list.mapi(fun(i,e) -> begin
+      dump("#{i}=#{fst(e)}")
+    end, !pl_sequences))
+    dump("")
+
+    dump("[playlists]")
+    ignore(list.mapi(fun(i,e) -> begin
+      dump("#{i}=#{fst(e)}")
+    end, !all_playlists))
+    dump("")    
+
+    list.iter(fun(e) -> begin
+      section = "[*p:#{fst(e)}]"
+      items = list.join(!snd(e), separator="\n")
+      dump("#{section}\n#{items}\n")
+    end, !all_playlists)
+
+  end
+
   server.register("#{id}.reload", fun(s) -> begin
     load_playlists()
     "OK"
+  end)
+
+  server.register("#{id}.dump", fun(s) -> begin
+    save_dump()
+    "Done"
   end)
 
   load_playlists()
@@ -205,8 +250,12 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       sequence
     else
       list.map(fun(p) -> (fst(p), 5.0), !all_playlists)
-    end
+    end  
+
+  # TODO: Restore dump, if any
 
   sequence_started_at := gettimeofday()
-  request.dynamic(id=id, default_duration=5.0, length=5.0, next)
+  s = request.dynamic(id=id, default_duration=5.0, length=5.0, next)
+  source.on_shutdown(s, save_dump)
+  s
 end
