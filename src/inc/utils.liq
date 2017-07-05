@@ -31,15 +31,15 @@ def list.unique(a)
     end, [], a)
 end
 
-def list.rotate(a)
-  list.push(list.tl(a), list.hd(a, default=""))
+def list.rotate(a,~default)
+  list.push(list.tl(a), list.hd(a, default=default))
 end
 
-def list.shift(a,~default="")
+def list.shift(a,~default)
   (list.hd(a,default=default), list.tl(a)) 
 end
 
-def list.shift_rotate(a,~default="")
-  hd = list.hd(a, default="")
+def list.shift_rotate(a,~default)
+  hd = list.hd(a, default=default)
   (hd, list.push(list.tl(a), hd))
 end

@@ -33,96 +33,100 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
   sequence_started_at = ref 0.
   pl_sequences = ref [(ref [], 0.)] # mutable list of, pair<filelist, duration>
-  current_seq = ref (ref [], 0.) # reference to current pair<filelist, duration>
   seq_cursor = ref 0
   item_counter = ref 0
 
   def load_uri(uri)
-      files = 
+      files =
         if file.is_directory(uri) then
             get_process_lines("find #{quote(uri)} -type f | sort")
-        else 
-            # TODO: Resolve playlist file
-            []
+        else
+            list.map(snd, playlist.parse(uri))
         end
-          
+
       randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)
       ref list.filter(string.match(pattern=!_audio_regex), randomized)
   end
 
-  def circulate_sequences(~reshuffle=false)
+  def sequence.current()
+    list.hd(!pl_sequences, default=(ref [], 0.))
+  end
+
+  def sequence.circulate(~reshuffle=false)
     log("Circulate sequences.")
 
+    pl_sequences := list.rotate(!pl_sequences, default=(ref [], 0.))
+
+    print.green(pl_sequences)
+
     if reshuffle then
-      list = fst(!current_seq)
-      d = snd(!current_seq)
+      current_seq = sequence.current()
 
-      list = list.sort(fun (x,y) -> int_of_float(random.float()), !list)
+      list = fst(current_seq)
+      d = snd(current_seq)
 
-      current_seq := (ref list, d)
-    end
-
-    pl_sequences := list.tl(list.append(!pl_sequences, [!current_seq]))
-    current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
+      list := list.sort(fun (x,y) -> int_of_float(random.float()), !list)
+      print.cyan("Shuffled #{!list}")
+    end    
 
     sequence_started_at := gettimeofday()
     item_counter := 0
-  end  
+  end
 
   next_tried = ref 0
   def rec next()
+    current_seq = sequence.current()
+
     duration = (gettimeofday() - !sequence_started_at) / 60.
-    seq_limit = snd(!current_seq)
+    seq_limit = snd(current_seq)
 
     log("Playlist played for #{duration}, Sequence Limit = #{seq_limit}")
 
     if duration >= seq_limit then
-      circulate_sequences() 
-    elsif !item_counter >= list.length(!fst(!current_seq)) then
+      sequence.circulate()
+    elsif !item_counter >= list.length(!fst(current_seq)) then
       print.red("Playlist loop, move to next playlist.")
-      circulate_sequences(reshuffle=true)
+      sequence.circulate(reshuffle=true)      
     end
 
-    ref_files = fst(!current_seq)      
+    current_seq = sequence.current()
+    ref_files = fst(current_seq)
 
     file =
       if list.length(!ref_files) > 0 then
-        selected = list.hd(!ref_files, default="")
-        ref_files := list.tl(!ref_files) # remove head, tail remains
-        if selected != "" then
-          log("Selected: #{selected}")
-          ref_files := list.append(!ref_files, [selected])
-        end
+        shifted = list.shift_rotate(!ref_files, default="")
 
-        item_counter := !item_counter + 1
+        selected = fst(shifted)
+        ref_files := snd(shifted)
+        
+        log("Selected: #{selected}")
 
-        selected       
+        selected
       else
         # this should never happen
         ""
-      end 
+      end
 
     req = request.create(file)
     meta = request.metadata(req)
 
-    result = if notdup(backlog=artist_backlog, size=!backlog_size, meta) then
+    if notdup(backlog=artist_backlog, size=!backlog_size, meta) then
       next_tried := 0
+      item_counter := !item_counter + 1
       req
-    else      
+    else
       if !next_tried < !backlog_size then
         log("Duplicate found, retry next.")
         next_tried := !next_tried + 1
         next()
-      else     
+      else
         log("Can't find non-duplicated item.")
         # make some room and try again
         artist_backlog := list.tl(!artist_backlog)
         next()
       end
     end
-
-    result
-  end  
+  end
 
   all_playlists := list.map(
     fun(item) -> begin
@@ -144,7 +148,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     ret = ref []
 
     list.iter(
-      fun(item) -> begin 
+      fun(item) -> begin
         if list.length(!ret) == 0 then
           if fst(item) == name then
             ret := !snd(item)
@@ -174,11 +178,11 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
   if (total < !backlog_size) then
     backlog_size := total
-    log("Adjust backlog_size to #{!backlog_size}")    
+    log("Adjust backlog_size to #{!backlog_size}")
   end
 
   # Pick from sequence
-  current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
+  # current_seq := list.hd(!pl_sequences, default=(ref [], 0.))
   sequence_started_at := gettimeofday()
   request.dynamic(id=id, default_duration=5.0, length=5.0, next)
 end
