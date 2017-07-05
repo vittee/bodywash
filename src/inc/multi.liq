@@ -231,7 +231,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
     list.iter(fun(e) -> begin
       section = "[*p:#{fst(e)}]"
-      items = list.join(!snd(e), separator="\n")
+      items = list.join(list.mapi(fun(i,f) -> "#{i}=#{f}", !snd(e)), separator="\n")
       dump("#{section}\n#{items}\n")
     end, !all_playlists)
 
