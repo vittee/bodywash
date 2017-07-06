@@ -36,6 +36,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   item_counter = ref 0
 
   track_pos = ref 0.
+  restore_track_pos = ref 0.
 
   shutdown_in_progress = ref false
 
@@ -95,7 +96,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   end
 
   next_tried = ref 0
-  def rec next()
+  def rec next(~force=false)
     current_seq = sequence.current()
 
     pl_name = fst(current_seq)
@@ -133,7 +134,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     req = request.create(file)
     meta = request.metadata(req)
 
-    if notdup(backlog=artist_backlog, size=!backlog_size, meta) then
+    if force or notdup(backlog=artist_backlog, size=!backlog_size, meta) then
       next_tried := 0
       item_counter := !item_counter + 1
       req
@@ -221,9 +222,9 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     dump("")
 
     dump("[sequence]")
-    ignore(list.mapi(fun(i,e) -> begin
-      dump("#{i}=#{fst(e)}")
-    end, !pl_sequences))
+    list.map(fun(e) -> begin
+      dump("#{fst(e)}=#{snd(e)}")
+    end, !pl_sequences)
     dump("")
 
     dump("[playlists]")
@@ -251,8 +252,6 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     "Done"
   end)
 
-  load_playlists()
-
   pl_sequences :=
     if list.length(sequence) > 0 then
       sequence
@@ -260,11 +259,40 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       list.map(fun(p) -> (fst(p), 5.0), !all_playlists)
     end
 
-  # TODO: Restore dump, if any
+  if file.exists(dump_file) then
+    d = conf.load(dump_file)
+    state = d("state")
 
-  sequence_started_at := gettimeofday()
+    item_counter := int_of_string(state["item_counter"],default=0)
+    sequence_started_at := gettimeofday() - float_of_string(state["duration"],default=0.0)
+    track_pos := float_of_string(state["track_pos"],default=0.0)
 
-  s = request.dynamic(default_duration=5.0, length=5.0, next)
+    restore_track_pos := !track_pos
+
+    artist_backlog := list.map(snd, d("backlog"))
+    pl_sequences := list.map(fun(e) -> begin
+      (fst(e), float_of_string(snd(e), default=5.0))
+    end, d("sequence"))
+
+    all_playlists := list.map(fun(e) -> begin
+      name = snd(e)
+      (name, ref list.map(snd, d("*p:#{name}")))
+    end, d("playlists"))
+  else
+    sequence_started_at := gettimeofday()
+  end
+
+  s = request.dynamic(default_duration=5.0, length=5.0, fun() -> begin
+    if !restore_track_pos > 0.0 then
+      current_seq = sequence.current()
+      ref_files = playlists.of(fst(current_seq))
+      last = list.last(!ref_files, default="")
+
+      request.create(last)
+    else
+      next()
+    end
+  end)
 
   source.on_shutdown(s, fun() -> begin
     shutdown_in_progress := true
@@ -287,8 +315,18 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     end
   end)
 
+  load_playlists()
+
   on_track(id=id, fun(m) -> begin
     track_pos := 0.0
-    save_dump()
+    if !restore_track_pos > 0.0 then
+      track_pos := !restore_track_pos
+      source.seek(s, !restore_track_pos)
+
+      restore_track_pos := 0.0
+    else
+      save_dump()
+    end
+
   end, s)
 end

@@ -43,3 +43,12 @@ def list.shift_rotate(a,~default)
   hd = list.hd(a, default=default)
   (hd, list.push(list.tl(a), hd))
 end
+
+def list.last(a,~default)
+  i = list.length(a)-1
+  if i >= 0 then
+    list.nth(a,i,default=default)
+  else
+    default
+  end
+end
