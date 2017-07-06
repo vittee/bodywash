@@ -23,7 +23,7 @@ def notdup(~meta_key="artist",~size=20,~backlog,m)
     end
 end
 
-def playlist.multi(~id,~sequence=[],~size=20, uris)
+def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, uris)
   log = log(label="playlist.multi")
 
   artist_backlog = ref []
@@ -36,7 +36,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   item_counter = ref 0
 
   track_pos = ref 0.
-  restore_track_pos = ref 0.
+  resume_track_pos = ref 0.
 
   shutdown_in_progress = ref false
 
@@ -167,6 +167,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       a = if list.mem_assoc(name, a) then
         ref_old = playlists.lookup(name, a)
         diff = list.diff(!ref_old, new)
+        log("Merging #{name} #{diff}")
         ref_old := list.filter(file.exists, list.append(!ref_old, list.randomize(diff)))
 
         list.push(list.remove_assoc(name, a), (name, ref_old))
@@ -197,7 +198,12 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     log("New backlog_size = #{!backlog_size}")
   end
 
-  dump_file = "plm.#{id}.dump"
+  dump_file =
+    if dump_file == "" then
+      "plm.#{id}.dump"
+    else
+      dump_file
+    end
 
   def save_dump()
     # Truncate
@@ -222,7 +228,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     dump("")
 
     dump("[sequence]")
-    list.map(fun(e) -> begin
+    list.iter(fun(e) -> begin
       dump("#{fst(e)}=#{snd(e)}")
     end, !pl_sequences)
     dump("")
@@ -242,14 +248,33 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     system("echo #{quote(!buffer)} >> #{dump_file}")
   end
 
-  server.register("#{id}.reload", fun(s) -> begin
+  server.register(namespace=id, "reload", usage="reload", fun(s) -> begin
     load_playlists()
+    save_dump()
     "OK"
   end)
 
-  server.register("#{id}.dump", fun(s) -> begin
+  server.register(namespace=id, "dump", usage="dump", fun(s) -> begin
     save_dump()
     "Done"
+  end)
+
+  server.register(namespace=id, "backlog", usage="backlog", fun(s) -> begin
+    list.join(!artist_backlog, separator="\n")
+  end)
+
+  server.register(namespace=id, "sequence", usage="sequence", fun(s) -> begin
+    list.join(separator="\n",list.map(fun(e) -> begin
+      "#{fst(e)}=#{snd(e)}"
+    end, !pl_sequences))
+  end)
+
+  server.register(namespace=id, "playlists", usage="playlists", fun(s) -> begin
+    list.join(separator="\n",list.map(fst,!all_playlists))
+  end)
+
+  server.register(namespace=id, "playlist", usage="playlist <name>", fun(s) -> begin
+    list.join(separator="\n", list.mapi(fun(i,e) -> "#{i}=#{e}", !playlists.of(s)))
   end)
 
   pl_sequences :=
@@ -267,7 +292,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     sequence_started_at := gettimeofday() - float_of_string(state["duration"],default=0.0)
     track_pos := float_of_string(state["track_pos"],default=0.0)
 
-    restore_track_pos := !track_pos
+    resume_track_pos := !track_pos
 
     artist_backlog := list.map(snd, d("backlog"))
     pl_sequences := list.map(fun(e) -> begin
@@ -283,7 +308,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   end
 
   s = request.dynamic(default_duration=5.0, length=5.0, fun() -> begin
-    if !restore_track_pos > 0.0 then
+    if !resume_track_pos > 0.0 then
       current_seq = sequence.current()
       ref_files = playlists.of(fst(current_seq))
       last = list.last(!ref_files, default="")
@@ -318,15 +343,13 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   load_playlists()
 
   on_track(id=id, fun(m) -> begin
-    track_pos := 0.0
-    if !restore_track_pos > 0.0 then
-      track_pos := !restore_track_pos
-      source.seek(s, !restore_track_pos)
-
-      restore_track_pos := 0.0
+    if auto_resume and !resume_track_pos > 0.0 then
+      track_pos := !resume_track_pos
+      resume_track_pos := 0.0
+      ignore(source.seek(s, !track_pos))
     else
+      track_pos := 0.0
       save_dump()
     end
-
   end, s)
 end

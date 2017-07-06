@@ -20,7 +20,11 @@ settings = conf.settings(conf)
 s.int = settings.int(settings)
 s.bool = settings.bool(settings)
 
-multi = playlist.multi(id="multi", conf.playlists(conf), sequence=conf.sequence(conf), size=s.int("backlog_size", default=20))
+multi = playlist.multi(id="multi", conf.playlists(conf), 
+  sequence=conf.sequence(conf),
+  size=s.int("backlog_size", default=20),
+  auto_resume=s.bool("auto_resume", default=true)
+)
 add_skip_command(multi)
 
 multi = 
@@ -36,4 +40,4 @@ mixer = mix(id="mixer", [xfader])
 warmup = blank(duration=0.7)
 main = mksafe(sequence(merge=true,[warmup,mixer]))
 
-output.ao(id="output", fallible=true, on_start=fun() -> ignore(server.execute("mixer.select 0 true")), main)
+output.ao(id="output", buffer_size=4, fallible=true, on_start=fun() -> ignore(server.execute("mixer.select 0 true")), main)
