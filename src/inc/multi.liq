@@ -35,7 +35,9 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
   pl_sequences = ref [("", 0.)] # mutable list of, pair<filelist, duration>
   item_counter = ref 0
 
-  track_started_at = ref 0.
+  track_pos = ref 0.
+
+  shutdown_in_progress = ref false
 
   def load_uri(uri)
       files =
@@ -194,20 +196,21 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
     log("New backlog_size = #{!backlog_size}")
   end
 
+  dump_file = "plm.#{id}.dump"
+
   def save_dump()
-    file = "plm.#{id}.dump"
     # Truncate
-    system("echo #{quote('# Bodywash playlist.multi dump')} > #{file}")
+    system("echo #{quote('# Bodywash playlist.multi dump')} > #{dump_file}")
 
     buffer = ref ""
     def dump(s)
-      buffer := !buffer^"#{s}\n"      
+      buffer := !buffer^"#{s}\n"
     end
 
     dump("[state]")
     dump("item_counter=#{!item_counter}")
     dump("duration="^string_of(gettimeofday() - !sequence_started_at))
-    dump("track_pos="^string_of(gettimeofday() - !track_started_at))
+    dump("track_pos="^string_of(!track_pos))
     dump("")
 
     dump("[backlog]")
@@ -235,7 +238,7 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
       dump("#{section}\n#{items}\n")
     end, !all_playlists)
 
-    system("echo #{quote(!buffer)} >> #{file}")
+    system("echo #{quote(!buffer)} >> #{dump_file}")
   end
 
   server.register("#{id}.reload", fun(s) -> begin
@@ -263,8 +266,29 @@ def playlist.multi(~id,~sequence=[],~size=20, uris)
 
   s = request.dynamic(default_duration=5.0, length=5.0, next)
 
-  source.on_shutdown(s, save_dump)
+  source.on_shutdown(s, fun() -> begin
+    shutdown_in_progress := true
+    save_dump()
+  end)
+
+  last_track_remaining = ref 0.0
+  add_timeout(fast=true, 0.1, fun() -> begin
+    remaining = source.remaining(s)
+    if remaining != !last_track_remaining then
+      track_pos := !track_pos + 0.1
+    end
+
+    last_track_remaining := remaining
+
+    if !shutdown_in_progress then
+      -1.0
+    else
+      0.1
+    end
+  end)
+
   on_track(id=id, fun(m) -> begin
-    track_started_at := gettimeofday()
+    track_pos := 0.0
+    save_dump()
   end, s)
 end
