@@ -27,6 +27,7 @@ def boot()
   end
 
   _audio_regex := "\.(#{list.join(!_audio_ext,separator='|')})$"
+  set("audio.converter.samplerate.libsamplerate.quality", "best")  
 end
 
 %include "inc/conf.liq"
