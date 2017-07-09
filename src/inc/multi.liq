@@ -346,7 +346,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     if auto_resume and !resume_track_pos > 0.0 then
       track_pos := !resume_track_pos
       resume_track_pos := 0.0
-      ignore(source.seek(s, !track_pos))
+      track_pos := source.seek(s, !track_pos)
     else
       track_pos := 0.0
       save_dump()
