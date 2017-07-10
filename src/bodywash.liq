@@ -19,6 +19,7 @@ s.bool = settings.bool(settings)
 
 multi = playlist.multi(id="multi", conf.playlists(conf), 
   sequence=conf.sequence(conf),
+  dump_file="#{basename(conf_file)}.dump",
   size=s.int("backlog_size", default=20),
   auto_resume=s.bool("auto_resume", default=true)
 )

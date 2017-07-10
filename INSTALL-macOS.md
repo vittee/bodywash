@@ -11,8 +11,8 @@ $ opam init
 
 ## Installing libraries.
 ```bash
-$ opam depext pcre ogg vorbis theora flac mad lame fdkaac lo ao portaudio taglib cry yojson magic
-$ opam install ogg vorbis theora flac mad lame fdkaac lo ao portaudio taglib cry yojson magic
+$ opam depext pcre ogg vorbis theora flac mad lame fdkaac lo ao portaudio taglib cry yojson magic samplerate
+$ opam install ogg vorbis theora flac mad lame fdkaac lo ao portaudio taglib cry yojson magic samplerate
 ```
 
 ## Install liquidsoap

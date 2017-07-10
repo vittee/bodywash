@@ -45,7 +45,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
         if file.is_directory(uri) then
             get_process_lines("find #{quote(uri)} -type f | sort")
         else
-            list.map(snd, playlist.parse(uri))
+          list.map(snd, playlist.parse(uri))
         end
 
       randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)
