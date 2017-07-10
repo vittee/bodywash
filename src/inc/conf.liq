@@ -39,3 +39,13 @@ end
 def conf.sequence(conf)
     list.map(fun(kv) -> (fst(kv), float_of_string(snd(kv))), conf("sequence"))
 end
+
+def conf.parse_detail(s) 
+  list.map(
+    fun(e) -> begin 
+      e = string.split(separator=":",e)
+      (list.nth(e,0,default=""), list.nth(e,1,default="")) 
+    end, 
+    string.split(separator="\,", s)
+  )
+end

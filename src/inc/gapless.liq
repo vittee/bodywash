@@ -1,8 +1,11 @@
 def gapless(s)
+  log = log(label="gapless")
+
   ending = ref false
 
   sb = on_blank(max_blank=0.7, threshold=-39.0, {
     if !ending then
+      log("Blank detected at ending, force doing smart cross.")
       source.skip(s)
     end
   }, s)
@@ -20,7 +23,7 @@ def gapless(s)
   margin = 4.0
 
   add = fun(a,b) -> add(normalize=false,[b,a])
-  fout = fade.out(type="exp",duration=3.0)
+  fout = fade.out(type="exp",duration=2.5)
   add.out = fun(a,b) -> add(fout(a), b)
 
   def transition(a,b,ma,mb,sa,sb)
@@ -37,5 +40,5 @@ def gapless(s)
       end
   end
 
-  smart_cross(transition, width=2.0, duration=3.5, eat_blank(at_beginning=true,st))
+  smart_cross(transition, width=2.0, duration=3.0, eat_blank(at_beginning=true,st))
 end
