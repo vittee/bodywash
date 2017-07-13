@@ -3,14 +3,14 @@ def gapless(s)
 
   ending = ref false
 
-  sb = on_blank(max_blank=0.7, threshold=-39.0, {
+  sb = on_blank(max_blank=1.2, threshold=-25.0, {
     if !ending then
       log("Blank detected at ending, force doing smart cross.")
       source.skip(s)
     end
   }, s)
 
-  se = on_end(delay=5.0, fun(f, m) -> begin
+  se = on_end(delay=7.0, fun(f, m) -> begin
     ending := true
   end, sb)
 
