@@ -23,7 +23,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
     def pure_source(codec, s) 
       if codec == "opus" or codec == "flac" then
         print.yellow("Streaming with #{codec} codec, does not support metadata update.")
-        drop_metadata(s)
+        drop_metadata(buffer(s, buffer=0.25))
       else
         s
       end      
