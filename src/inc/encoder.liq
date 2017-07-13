@@ -384,6 +384,10 @@ def encoder.default()
   %endif
 end
 
+def encoder.default.icecast()
+  encoder.vorbis(samplerate=44100, bitrate=96)
+end
+
 def encoder.codec(conf,~default_samplerate=0)
   default_samplerate =
     if default_samplerate == 0 then

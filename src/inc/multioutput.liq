@@ -30,21 +30,26 @@ def output.multi(~namespace="output", ~encoders, conf, s)
     end
 
     def default_icecast_encoder()
-      # TODO: Ogg/Vorbis
-      ("mp3",encoder.mp3(samplerate=44100,bitrate=128))
+      ("vorbis", encoder.vorbis(samplerate=44100,bitrate=96))
     end
 
     active_source = 
       if type == "ao" then
         buffer_size = int_of_string(cnf["buffer_size"], default=2)
         output.ao(id=id, buffer_size=buffer_size, fallible=true, on_start=ready, s)
-      # elsif type == "harbor" then
-      #   port = int_of_string(cnf["port"], default=8000)
-      #   mount = cnf["mount"]
+      elsif type == "harbor" then
+        port = int_of_string(cnf["port"], default=8000)
+        mount = cnf["mount"]
 
-      #   if mount != "" then
-      #     output.harbor(id=id, on_start=ready, encoding="UTF-8", port=port, mount=mount, encoder, s)
-      #   end
+        if mount != "" then
+          encoder = get_encoder(default=default_icecast_encoder())
+          codec = fst(encoder)
+          encoder = snd(encoder)
+
+          output.harbor(id=id, on_start=ready, encoding="UTF-8", port=port, mount=mount, encoder, pure_source(codec, s))
+        else
+          output.dummy(s)
+        end
       elsif type == "icecast" then
         host = cnf["host"]
         port = int_of_string(cnf["port"], default=8000)
@@ -61,7 +66,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
 
           output.icecast(
             fallible=true,
-            id=id, on_start=ready, encoding="UTF-8", 
+            id=id, on_start=ready, encoding="UTF-8",
             host=host, port=port, mount=mount,
             password=password, public=public,
             description=description, genre=genre,
