@@ -42,5 +42,5 @@ main = mksafe(sequence(merge=true,[warmup,mixer]))
 output.multi(
   encoders=encoders.load(conf("encoders")), 
   conf("outputs"),
-  compress(threshold=-9.0, ratio=18.0, gain=6.0 main)
+  compress(threshold=-6.0, ratio=12.0, gain=3.0, main)
 )
