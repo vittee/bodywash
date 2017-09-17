@@ -312,8 +312,9 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       current_seq = sequence.current()
       ref_files = playlists.of(fst(current_seq))
       last = list.last(!ref_files, default="")
-
-      request.create(last)
+      
+      resume_track_pos := 0.0
+      request.create(last)      
     else
       next()
     end
