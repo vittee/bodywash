@@ -282,6 +282,26 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     list.join(separator="\n",list.map(fst,!all_playlists))
   end)
 
+  def dump_playlist(name)
+    name = if string.length(name) > 0 then
+      fst(sequence.current())
+    else
+      name
+    end
+
+    list.join(separator="\n", list.mapi(fun(i,e) -> "#{i}=#{e}", !playlists.of(name)))
+  end
+
+  server.register(namespace=id, "playlist", usage="playlist <name>", dump_playlist)
+
+  server.register(namespace=id, "playlist.current", usage="playlist.current", fun(s) -> begin
+    dump_playlist(fst(sequence.current()))
+  end)
+
+  server.register(namespace=id, "plc", usage="plc", fun(s) -> begin
+    dump_playlist(fst(sequence.current()))
+  end)  
+
   server.register(namespace=id, "sequence.next", usage="sequence.next", description="", fun(s) -> begin
     sequence.circulate()
     save_dump()
