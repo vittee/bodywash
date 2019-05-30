@@ -35,8 +35,12 @@ def output.multi(~namespace="output", ~encoders, conf, s)
 
     active_source = 
       if type == "ao" then
-        buffer_size = int_of_string(cnf["buffer_size"], default=2)
-        output.ao(id=id, buffer_size=buffer_size, fallible=true, on_start=ready, s)
+        frame_duration = get("frame.duration", default=0.04)
+        buffer_size = int_of_string(cnf["buffer_size"], default=int_of_float(2.0/frame_duration))
+        output.ao(id=id, buffer_size=buffer_size, fallible=false, on_start=ready, s)
+      elsif type == "portaudio" then
+        buflen = int_of_string(cnf["buflen"], default=16384)
+        output.portaudio(id=id, buflen=buflen, fallible=true, on_start=ready, s)
       elsif type == "harbor" then
         port = int_of_string(cnf["port"], default=8000)
         mount = cnf["mount"]
