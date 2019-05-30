@@ -13,6 +13,12 @@ def boot()
   _audio_ext := list.filter(fun(d) -> d != "", list.map(fun(d) -> begin
     if d == "mad" then
         "mp3"
+    elsif d == "aac" then
+        "aac"
+    elsif d == "mp4" then
+        "mp4|m4a"
+    elsif d == "ogg" then
+        "ogg"
     elsif d == "flac" then
         "flac"
     elsif d == "wav" then
@@ -23,7 +29,7 @@ def boot()
   end, decoders))
 
   if list.length(!_audio_ext) == 0 then
-    _audio_ext := ["mp3", "ogg", "flac", "wav"]
+    _audio_ext := ["mp3", "ogg", "flac", "wav", "m4a", "aac"]
   end
 
   _audio_regex := "\.(#{list.join(!_audio_ext,separator='|')})$"
@@ -31,7 +37,7 @@ def boot()
   set("log.stdout", true)
   set("server.telnet", true)
   set("server.timeout", 180.0)
-  set("audio.converter.samplerate.libsamplerate.quality", "best")  
+  set("audio.converter.samplerate.libsamplerate.quality", "best")
   set("frame.duration", 0.08)
 end
 
