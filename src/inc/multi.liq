@@ -302,6 +302,12 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     dump_playlist(fst(sequence.current()))
   end)  
 
+  server.register(namespace=id, "shuffle", usage="shuffle", description="Shuffle current playlist", fun(s) -> begin
+    playlists.shuffle(fst(sequence.current()))
+    save_dump()
+    "OK"
+  end)
+
   server.register(namespace=id, "sequence.next", usage="sequence.next", description="", fun(s) -> begin
     sequence.circulate()
     save_dump()
