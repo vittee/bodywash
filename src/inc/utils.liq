@@ -52,3 +52,8 @@ def list.last(a,~default)
     default
   end
 end
+
+def list.movef(a,~index,~default)
+  item = list.nth(a,index,default=default)
+  list.add(item,list.filter(fun(e) -> e != item,a))
+end
