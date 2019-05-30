@@ -314,6 +314,11 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     "OK"    
   end)
 
+  track = ref [("", "")]
+
+  server.register(namespace=id, "track", usage="track", fun(_s) -> begin
+    l = list.map(fun(e) -> "#{fst(e)}=#{snd(e)}", !track)
+    list.join(l, separator="\n")
   end)
 
   pl_sequences :=
@@ -382,6 +387,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
   load_playlists()
 
   on_track(id=id, fun(m) -> begin
+    track := m
     if auto_resume and !resume_track_pos > 0.0 then
       track_pos := !resume_track_pos
       resume_track_pos := 0.0
