@@ -187,6 +187,9 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     if force or notdup(backlog=artist_backlog, size=!backlog_size, meta) then
       next_tried := 0
       item_counter := !item_counter + 1
+      artist = meta["artist"]
+      title = meta["title"]
+      print.green("#{artist} - #{title}")
       req
     else
       if !next_tried < !backlog_size then
