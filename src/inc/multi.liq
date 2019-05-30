@@ -159,11 +159,10 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     duration = (gettimeofday() - !sequence_started_at) / 60.
     log("Playlist played for #{duration}, Sequence Limit = #{seq_timeout}")
 
-    if duration >= seq_timeout then
-      sequence.circulate()
-    elsif !item_counter >= list.length(!pl) then
-      log("Playlist looped #{!item_counter} time, move to next playlist.")
-      sequence.circulate(reshuffle=true)
+    end_of_playlist = !item_counter >= list.length(!pl)
+
+    if (duration >= seq_timeout) or end_of_playlist then
+      sequence.circulate(reshuffle=end_of_playlist)
     end
 
     current_seq = sequence.current()
