@@ -17,7 +17,7 @@ settings = conf.settings(conf)
 s.int = settings.int(settings)
 s.bool = settings.bool(settings)
 
-multi = playlist.multi(id="multi", conf.playlists(conf), 
+multi = playlist.multi(id="ml", conf.playlists(conf), 
   sequence=conf.sequence(conf),
   dump_file="#{basename(conf_file)}.dump",
   size=s.int("backlog_size", default=20),
@@ -33,14 +33,13 @@ multi =
         multi
     end
 
-xfader = gapless(multi)
-mixer = mix(id="mixer", [xfader])
-warmup = blank(duration=0.7)
-main = mksafe(sequence(merge=true,[warmup,mixer]))
-  
+xfader = mksafe(gapless(multi))
+# mixer = mix(id="mixer", [xfader])
+# warmup = blank(duration=0.7)
+# main = sequence(merge=true,[warmup,mixer])
 
 output.multi(
   encoders=encoders.load(conf("encoders")), 
   conf("outputs"),
-  compress(threshold=-6.0, ratio=12.0, gain=3.0, main)
+  compress(threshold=-6.0, ratio=12.0, gain=3.0, xfader)
 )
