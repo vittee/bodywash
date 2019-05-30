@@ -46,7 +46,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
           codec = fst(encoder)
           encoder = snd(encoder)
 
-          output.harbor(id=id, on_start=ready, encoding="UTF-8", port=port, mount=mount, encoder, pure_source(codec, s))
+          output.harbor(id=id, on_start=ready, encoding="UTF-8", port=port, mount=mount, encoder, mksafe(pure_source(codec, s)))
         else
           output.dummy(s)
         end
