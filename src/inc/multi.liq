@@ -141,6 +141,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     if reshuffle then
       name = fst(sequence.current())
       playlists.shuffle(name)
+      save_dump()
     end
 
     sequence_started_at := gettimeofday()
