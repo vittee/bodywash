@@ -302,6 +302,27 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     dump_playlist(fst(sequence.current()))
   end)  
 
+  def movef_playlist(name,index)
+    ref_files = playlists.of(name)
+    ref_files := list.movef(!ref_files, index=index, default="") 
+    save_dump()
+    list.hd(!ref_files,default="")
+  end
+
+  server.register(namespace=id, "playlist.movef", usage="playlist.movef <name> <index>", description="Move item <index> to the top of the playlist <name>", fun(s) -> begin
+    args = string.split(s,separator=" ")
+    name = list.hd(args,default="")
+    index = int_of_string(list.hd(list.tl(args),default=""),default=0)
+    movef_playlist(name,index)
+  end)
+
+  def movefc_playlist(s)
+    movef_playlist(fst(sequence.current()),int_of_string(s))
+  end
+
+  server.register(namespace=id, "playlist.movefc", usage="playlist.movefc <index>", description="Move item <index> to the top of the current playlist", movefc_playlist)
+  server.register(namespace=id, "plmfc", usage="plmfc <index>", description="Move item <index> to the top of the current playlist", movefc_playlist)
+
   server.register(namespace=id, "shuffle", usage="shuffle", description="Shuffle current playlist", fun(s) -> begin
     playlists.shuffle(fst(sequence.current()))
     save_dump()
