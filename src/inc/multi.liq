@@ -32,7 +32,9 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
   all_playlists = ref [("",ref [])] # mutable map, k:string, v:mutable list # `v` is file list.
 
   sequence_started_at = ref 0.
-  pl_sequences = ref [("", 0.)] # mutable list of, pair<filelist, duration>
+  pl_sequences = ref [("", 0.)] # mutable list of, pair<listname, duration>
+
+  # TODO: Remove item_counter, it causes confusion.
   item_counter = ref 0
 
   track_pos = ref 0.
@@ -51,6 +53,56 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)
       ref list.filter(string.match(pattern=!_audio_regex), randomized)
   end
+
+  dump_file =
+    if dump_file == "" then
+      "plm.#{id}.dump"
+    else
+      dump_file
+    end
+
+  def save_dump()
+    # Truncate
+    system("echo #{quote('# Bodywash playlist.multi dump')} > #{dump_file}")
+
+    buffer = ref ""
+    def dump(s)
+      buffer := !buffer^"#{s}\n"
+    end
+
+    dump("[state]")
+    dump("item_counter=#{!item_counter}")
+    dump("duration="^string_of(gettimeofday() - !sequence_started_at))
+    dump("track_pos="^string_of(!track_pos))
+    dump("")
+
+    dump("[backlog]")
+    ignore(list.mapi(fun(i,e) -> begin
+      dump("#{i}=#{e}")
+      0
+    end, !artist_backlog))
+    dump("")
+
+    dump("[sequence]")
+    list.iter(fun(e) -> begin
+      dump("#{fst(e)}=#{snd(e)}")
+    end, !pl_sequences)
+    dump("")
+
+    dump("[playlists]")
+    ignore(list.mapi(fun(i,e) -> begin
+      dump("#{i}=#{fst(e)}")
+    end, !all_playlists))
+    dump("")
+
+    list.iter(fun(e) -> begin
+      section = "[*p:#{fst(e)}]"
+      items = list.join(list.mapi(fun(i,f) -> "#{i}=#{f}", !snd(e)), separator="\n")
+      dump("#{section}\n#{items}\n")
+    end, !all_playlists)
+
+    system("echo #{quote(!buffer)} >> #{dump_file}")
+  end  
 
   def playlists.lookup(name,list)
     list.fold(fun(ret, item) -> begin
@@ -122,8 +174,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
 
         selected = fst(shifted)
         ref_files := snd(shifted)
-
-        log("Selected: #{selected}")
 
         selected
       else
@@ -198,56 +248,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     log("New backlog_size = #{!backlog_size}")
   end
 
-  dump_file =
-    if dump_file == "" then
-      "plm.#{id}.dump"
-    else
-      dump_file
-    end
-
-  def save_dump()
-    # Truncate
-    system("echo #{quote('# Bodywash playlist.multi dump')} > #{dump_file}")
-
-    buffer = ref ""
-    def dump(s)
-      buffer := !buffer^"#{s}\n"
-    end
-
-    dump("[state]")
-    dump("item_counter=#{!item_counter}")
-    dump("duration="^string_of(gettimeofday() - !sequence_started_at))
-    dump("track_pos="^string_of(!track_pos))
-    dump("")
-
-    dump("[backlog]")
-    ignore(list.mapi(fun(i,e) -> begin
-      dump("#{i}=#{e}")
-      0
-    end, !artist_backlog))
-    dump("")
-
-    dump("[sequence]")
-    list.iter(fun(e) -> begin
-      dump("#{fst(e)}=#{snd(e)}")
-    end, !pl_sequences)
-    dump("")
-
-    dump("[playlists]")
-    ignore(list.mapi(fun(i,e) -> begin
-      dump("#{i}=#{fst(e)}")
-    end, !all_playlists))
-    dump("")
-
-    list.iter(fun(e) -> begin
-      section = "[*p:#{fst(e)}]"
-      items = list.join(list.mapi(fun(i,f) -> "#{i}=#{f}", !snd(e)), separator="\n")
-      dump("#{section}\n#{items}\n")
-    end, !all_playlists)
-
-    system("echo #{quote(!buffer)} >> #{dump_file}")
-  end
-
   server.register(namespace=id, "reload", usage="reload", fun(s) -> begin
     load_playlists()
     save_dump()
@@ -313,7 +313,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       ref_files = playlists.of(fst(current_seq))
       last = list.last(!ref_files, default="")
       
-      resume_track_pos := 0.0
       request.create(last)      
     else
       next()
