@@ -266,6 +266,12 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     list.join(!artist_backlog, separator="\n")
   end)
 
+  server.register(namespace=id, "backlog.clear", usage="backlog.clear", fun(s) -> begin
+    artist_backlog := []
+    save_dump()
+    "OK"
+  end)
+
   server.register(namespace=id, "sequence", usage="sequence", fun(s) -> begin
     list.join(separator="\n",list.map(fun(e) -> begin
       "#{fst(e)}=#{snd(e)}"
