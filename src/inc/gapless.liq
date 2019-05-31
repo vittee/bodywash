@@ -44,5 +44,5 @@ def gapless(s)
       end
   end
 
-  smart_cross(transition, width=0.5, duration=3.0, eat_blank(at_beginning=true,st))
+  cross(transition, width=0.5, duration=3.0, eat_blank(at_beginning=true, st))
 end
