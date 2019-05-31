@@ -187,9 +187,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     if force or notdup(backlog=artist_backlog, size=!backlog_size, meta) then
       next_tried := 0
       item_counter := !item_counter + 1
-      artist = meta["artist"]
-      title = meta["title"]
-      print.green("#{artist} - #{title}")
+      print.green("$(artist) - $(title)" % meta)
       req
     else
       if !next_tried < !backlog_size then
@@ -371,7 +369,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     sequence_started_at := gettimeofday()
   end
 
-  s = request.dynamic(default_duration=5.0, length=5.0, fun() -> begin
+  s = request.dynamic(default_duration=5.0, length=5.0, {
     if !resume_track_pos > 0.0 then
       current_seq = sequence.current()
       ref_files = playlists.of(fst(current_seq))
@@ -381,15 +379,15 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     else
       next()
     end
-  end)
+  })
 
-  source.on_shutdown(s, fun() -> begin
+  source.on_shutdown(s, {
     shutdown_in_progress := true
     save_dump()
-  end)
+  })
 
   last_track_remaining = ref 0.0
-  add_timeout(fast=true, 0.1, fun() -> begin
+  add_timeout(fast=true, 0.1, {
     remaining = source.remaining(s)
     if remaining != !last_track_remaining then
       track_pos := !track_pos + 0.1
@@ -402,7 +400,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     else
       0.1
     end
-  end)
+  })
 
   load_playlists()
 
