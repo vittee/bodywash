@@ -5,6 +5,7 @@ def _audio_ext = ref [] end
 def _audio_regex = ref "" end
 
 def boot()
+  print.cyan("Bodywash running on #{os.type}")
   xpath = "/all/section/label[text()='file decoding']/../section/label"
   fmts = get_process_output("liquidsoap --list-plugins-xml | xmllint --xpath #{quote(xpath)} - | sed -nE 's/<label>([^<]+)<\\/label>/\\1 /pg'")
 
