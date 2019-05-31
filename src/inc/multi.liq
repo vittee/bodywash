@@ -45,10 +45,20 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
   def load_uri(uri)
       files =
         if file.is_directory(uri) then
-            get_process_lines("find #{quote(uri)} -type f | sort")
+          cmd = 
+            if os.type == "Win32" then
+              print.red("Listing win32")
+              "dir #{uri} /s/b/a-d/on"
+            else
+              "find #{quote(uri)} -type f | sort"
+            end
+
+          get_process_lines(cmd)
         else
           list.map(snd, playlist.parse(uri))
         end
+
+      files = list.map(fun(s) -> string.replace(pattern="[\r\n]", fun(m) -> "", s), files)
 
       randomized = list.sort(fun (x,y) -> int_of_float(random.float()), files)
       ref list.filter(string.match(pattern=!_audio_regex), randomized)
@@ -101,7 +111,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       dump("#{section}\n#{items}\n")
     end, !all_playlists)
 
-    system("echo #{quote(!buffer)} >> #{dump_file}")
   end  
 
   def playlists.lookup(name,list)
