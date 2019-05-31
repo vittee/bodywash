@@ -62,8 +62,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     end
 
   def save_dump()
-    # Truncate
-    system("echo #{quote('# Bodywash playlist.multi dump')} > #{dump_file}")
+    ignore(file.write(data="# Bodywash playlist.multi dump\n", dump_file))
 
     buffer = ref ""
     def dump(s)
@@ -101,7 +100,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       dump("#{section}\n#{items}\n")
     end, !all_playlists)
 
-    system("echo #{quote(!buffer)} >> #{dump_file}")
+    ignore(file.write(data=!buffer, append=true, dump_file))
   end  
 
   def playlists.lookup(name,list)
