@@ -1,5 +1,5 @@
 def gapless(s)
-  log = log(label="gapless")
+  log = log(label="gapless", level=2)
 
   high = -10.0
   medium = -30.0
