@@ -1,5 +1,5 @@
 def notdup(~meta_key="artist",~size=20,~backlog,m)
-    log = log(label="notdup")
+    log = log(label="notdup", level=2)
     v = string.case(m[meta_key],lower=true)
 
     if string.length(v) == 0 then
@@ -24,7 +24,7 @@ def notdup(~meta_key="artist",~size=20,~backlog,m)
 end
 
 def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, uris)
-  log = log(label="playlist.multi")
+  log = log(label="playlist.multi", level=2)
 
   artist_backlog = ref []
   backlog_size = ref size
@@ -229,7 +229,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       a = if list.mem_assoc(name, a) then
         ref_old = playlists.lookup(name, a)
         diff = list.diff(!ref_old, new)
-        log("Merging #{name} #{diff}")
         ref_old := list.filter(file.exists, list.append(list.randomize(diff), !ref_old,))
 
         list.push(list.remove_assoc(name, a), (name, ref_old))

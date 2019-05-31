@@ -1,5 +1,5 @@
 def gapless(s)
-  log = log(label="gapless")
+  log = log(label="gapless", level=2)
 
   high = -10.0
   medium = -30.0
@@ -44,5 +44,5 @@ def gapless(s)
       end
   end
 
-  smart_cross(transition, width=0.5, duration=3.0, eat_blank(at_beginning=true,st))
+  cross(transition, width=0.5, duration=3.0, eat_blank(at_beginning=true, st))
 end

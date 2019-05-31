@@ -474,6 +474,7 @@ def encoders.predefined()
   samplerate = get("frame.audio.samplerate", default=48000)
   
   groups = [
+    %ifencoder %fdkaac
     # HE-AAC v1
     ("he_aac", [
       (".max", encoder.he_aac(samplerate=samplerate, vbr=5)),
@@ -490,6 +491,8 @@ def encoders.predefined()
       (".low", encoder.he_aac_v2(samplerate=samplerate, vbr=2)),
       (".min", encoder.he_aac_v2(samplerate=samplerate, vbr=1))
     ]),
+    %endif
+    %ifencoder %mp3
     ("mp3", [
       (".max", encoder.mp3(samplerate=samplerate, bitrate=320)),
       (".high", encoder.mp3(samplerate=samplerate, bitrate=256)),
@@ -499,6 +502,8 @@ def encoders.predefined()
       (".poor", encoder.mp3(samplerate=samplerate, bitrate=64)),
       (".min", encoder.mp3(samplerate=samplerate, bitrate=48))
     ]),
+    %endif
+    %ifencoder %vorbis
     ("vorbis", [
       (".max", encoder.vorbis(samplerate=samplerate, bitrate=500)),
       (".high", encoder.vorbis(samplerate=samplerate, bitrate=320)),
@@ -517,6 +522,8 @@ def encoders.predefined()
       (".poor", encoder.vorbis.vbr(samplerate=samplerate, quality=0.0)),
       (".min", encoder.vorbis.vbr(samplerate=samplerate, quality=-0.1))
     ]),
+    %endif
+    %ifencoder %opus
     ("opus", [
       (".max", encoder.opus(bitrate=320)),
       (".high", encoder.opus(bitrate=256)),
@@ -524,11 +531,14 @@ def encoders.predefined()
       ("", encoder.opus(bitrate=96)),
       (".min", encoder.opus(bitrate=64)),
     ]),
-    ("flac", [
+    %endif
+    %ifencoder %flac
+    ("flac", [      
       (".fast", encoder.flac(samplerate=samplerate, compression=0)),
       ("", encoder.flac(samplerate=samplerate, compression=5)),
       (".slow", encoder.flac(samplerate=samplerate, compression=7)),
     ])
+    %endif
   ]
 
   groups = list.map(fun(g) -> begin
