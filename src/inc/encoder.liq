@@ -473,54 +473,72 @@ end
 def encoders.predefined()
   samplerate = get("frame.audio.samplerate", default=48000)
   
+  %ifencoder %fdkaac
+  he_aac = encoder.he_aac(samplerate=samplerate)
+  he_aac_v2 = encoder.he_aac_v2(samplerate=samplerate)
+  %endif
+
+  %ifencoder %mp3
+  mp3 = encoder.mp3(samplerate=samplerate)
+  %endif
+
+  %ifencoder %vorbis
+  vorbis = encoder.vorbis(samplerate=samplerate)
+  vorbis.vbr = encoder.vorbis.vbr(samplerate=samplerate)
+  %endif
+
+  %ifencoder %flac
+  flac = encoder.flac(samplerate=samplerate)
+  %endif
+
   groups = [
     %ifencoder %fdkaac
     # HE-AAC v1
     ("he_aac", [
-      (".max", encoder.he_aac(samplerate=samplerate, vbr=5)),
-      ("", encoder.he_aac(samplerate=samplerate, vbr=4)),
-      (".medium", encoder.he_aac(samplerate=samplerate, vbr=3)),
-      (".low", encoder.he_aac(samplerate=samplerate, vbr=2)),
-      (".min", encoder.he_aac(samplerate=samplerate, vbr=1))
+      (".max", he_aac(vbr=5)),
+      ("", he_aac(vbr=4)),
+      (".medium", he_aac(vbr=3)),
+      (".low", he_aac(vbr=2)),
+      (".min", he_aac(vbr=1))
     ]),
     # HE-AAC v2
     ("he_aac_v2", [
-      (".max", encoder.he_aac_v2(samplerate=samplerate, vbr=5)),
-      ("", encoder.he_aac_v2(samplerate=samplerate, vbr=4)),
-      (".medium", encoder.he_aac_v2(samplerate=samplerate, vbr=3)),
-      (".low", encoder.he_aac_v2(samplerate=samplerate, vbr=2)),
-      (".min", encoder.he_aac_v2(samplerate=samplerate, vbr=1))
+      (".max", he_aac_v2(vbr=5)),
+      ("", he_aac_v2(vbr=4)),
+      (".medium", he_aac_v2(vbr=3)),
+      (".low", he_aac_v2(vbr=2)),
+      (".min", he_aac_v2(vbr=1))
     ]),
     %endif
     %ifencoder %mp3
     ("mp3", [
-      (".max", encoder.mp3(samplerate=samplerate, bitrate=320)),
-      (".high", encoder.mp3(samplerate=samplerate, bitrate=256)),
-      (".medium", encoder.mp3(samplerate=samplerate, bitrate=192)),
-      ("", encoder.mp3(samplerate=samplerate, bitrate=128)),
-      (".low", encoder.mp3(samplerate=samplerate, bitrate=96)),
-      (".poor", encoder.mp3(samplerate=samplerate, bitrate=64)),
-      (".min", encoder.mp3(samplerate=samplerate, bitrate=48))
+      (".max", mp3(bitrate=320)),
+      (".high", mp3(bitrate=256)),
+      (".medium", mp3(bitrate=192)),
+      ("", mp3(bitrate=128)),
+      (".low", mp3(bitrate=96)),
+      (".poor", mp3(bitrate=64)),
+      (".min", mp3(bitrate=48))
     ]),
     %endif
     %ifencoder %vorbis
     ("vorbis", [
-      (".max", encoder.vorbis(samplerate=samplerate, bitrate=500)),
-      (".high", encoder.vorbis(samplerate=samplerate, bitrate=320)),
-      (".medium", encoder.vorbis(samplerate=samplerate, bitrate=128)),
-      (".low", encoder.vorbis(samplerate=samplerate, bitrate=96)),
-      ("", encoder.vorbis(samplerate=samplerate, bitrate=96)),
-      (".poor", encoder.vorbis(samplerate=samplerate, bitrate=64)),
-      (".min", encoder.vorbis(samplerate=samplerate, bitrate=48))
+      (".max", vorbis(bitrate=500)),
+      (".high", vorbis(bitrate=320)),
+      (".medium", vorbis(bitrate=128)),
+      (".low", vorbis(bitrate=96)),
+      ("", vorbis(bitrate=96)),
+      (".poor", vorbis(bitrate=64)),
+      (".min", vorbis(bitrate=48))
     ]),
     ("vorbis.vbr", [
-      (".max", encoder.vorbis.vbr(samplerate=samplerate, quality=1.0)),
-      (".high", encoder.vorbis.vbr(samplerate=samplerate, quality=0.9)),
-      (".medium", encoder.vorbis.vbr(samplerate=samplerate, quality=0.4)),
-      (".low", encoder.vorbis.vbr(samplerate=samplerate, quality=0.2)),
-      ("", encoder.vorbis.vbr(samplerate=samplerate, quality=0.2)),
-      (".poor", encoder.vorbis.vbr(samplerate=samplerate, quality=0.0)),
-      (".min", encoder.vorbis.vbr(samplerate=samplerate, quality=-0.1))
+      (".max", vorbis.vbr(quality=1.0)),
+      (".high", vorbis.vbr(quality=0.9)),
+      (".medium", vorbis.vbr(quality=0.4)),
+      (".low", vorbis.vbr(quality=0.2)),
+      ("", vorbis.vbr(quality=0.2)),
+      (".poor", vorbis.vbr(quality=0.0)),
+      (".min", vorbis.vbr(quality=-0.1))
     ]),
     %endif
     %ifencoder %opus
@@ -534,9 +552,9 @@ def encoders.predefined()
     %endif
     %ifencoder %flac
     ("flac", [      
-      (".fast", encoder.flac(samplerate=samplerate, compression=0)),
-      ("", encoder.flac(samplerate=samplerate, compression=5)),
-      (".slow", encoder.flac(samplerate=samplerate, compression=7)),
+      (".fast", flac(compression=0)),
+      ("", flac(compression=5)),
+      (".slow", flac(compression=7)),
     ])
     %endif
   ]
