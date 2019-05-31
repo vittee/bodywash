@@ -1,5 +1,5 @@
 def conf.load(file)
-    regex = "(\r\n|\r|\n)"
+    regex = "(\\r\\n|\\r|\\n)"
     lines = list.filter(
         fun(l) -> begin
             l != "" and not string.match(pattern=regex, l) and (string.sub(l, start=0, length=1) != "#")
@@ -10,7 +10,7 @@ def conf.load(file)
     name = ref ""
 
     fp = list.fold(fun(rows, l) -> begin
-        sm = string.extract(pattern="\[(.+)\]", l)
+        sm = string.extract(pattern="\\[(.+)\\]", l)
 
         if list.mem_assoc("1", sm) then
             name := sm["1"]
@@ -46,6 +46,6 @@ def conf.parse_detail(s)
       e = string.split(separator=":",e)
       (list.nth(e,0,default=""), list.nth(e,1,default="")) 
     end, 
-    string.split(separator="\,", s)
+    string.split(separator="\\,", s)
   )
 end

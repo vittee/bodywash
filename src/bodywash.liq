@@ -19,7 +19,7 @@ s.bool = settings.bool(settings)
 
 multi = playlist.multi(id="ml", conf.playlists(conf), 
   sequence=conf.sequence(conf),
-  dump_file="#{basename(conf_file)}.dump",
+  dump_file="#{path.basename(conf_file)}.dump",
   size=s.int("backlog_size", default=20),
   auto_resume=s.bool("auto_resume", default=true)
 )
@@ -34,9 +34,6 @@ multi =
     end
 
 xfader = mksafe(gapless(multi))
-# mixer = mix(id="mixer", [xfader])
-# warmup = blank(duration=0.7)
-# main = sequence(merge=true,[warmup,mixer])
 
 output.multi(
   encoders=encoders.load(conf("encoders")), 
