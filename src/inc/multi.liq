@@ -47,7 +47,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
         if file.is_directory(uri) then
           cmd = 
             if os.type == "Win32" then
-              print.red("Listing win32")
               "dir #{uri} /s/b/a-d/on"
             else
               "find #{quote(uri)} -type f | sort"
