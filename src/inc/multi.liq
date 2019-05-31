@@ -220,7 +220,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       a = if list.mem_assoc(name, a) then
         ref_old = playlists.lookup(name, a)
         diff = list.diff(!ref_old, new)
-        log("Merging #{name} #{diff}")
         ref_old := list.filter(file.exists, list.append(list.randomize(diff), !ref_old,))
 
         list.push(list.remove_assoc(name, a), (name, ref_old))
