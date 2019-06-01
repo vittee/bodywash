@@ -4,15 +4,15 @@
 $ brew install pkg-config ocaml opam
 ```
 
-Once install,Initialize the `opam`
+Once install, Initialize the `opam`
 ```bash
 $ opam init
 ```
 
 ## Installing libraries.
 ```bash
-$ opam depext pcre ogg vorbis theora flac mad lame fdkaac lo ao portaudio taglib cry yojson magic samplerate
-$ opam install ogg vorbis theora flac mad lame fdkaac lo ao portaudio taglib cry yojson magic samplerate
+$ opam depext pcre ogg vorbis opus theora flac mad lame faad fdkaac lo ao portaudio taglib cry yojson magic samplerate
+$ opam install ogg vorbis opus theora flac mad lame faad fdkaac lo ao portaudio taglib cry yojson magic samplerate
 ```
 
 ## Install liquidsoap

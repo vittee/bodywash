@@ -23,28 +23,37 @@ def output.multi(~namespace="output", ~encoders, conf, s)
     def pure_source(codec, s) 
       if codec == "opus" or codec == "flac" then
         print.yellow("Streaming with #{codec} codec, does not support metadata update.")
-        drop_metadata(s)
+        drop_metadata(buffer(s, buffer=0.25))
       else
         s
       end      
     end
 
     def default_icecast_encoder()
-      # TODO: Ogg/Vorbis
-      ("mp3",encoder.mp3(samplerate=44100,bitrate=128))
+      ("vorbis", encoder.vorbis(samplerate=44100,bitrate=96))
     end
 
     active_source = 
       if type == "ao" then
-        buffer_size = int_of_string(cnf["buffer_size"], default=2)
-        output.ao(id=id, buffer_size=buffer_size, fallible=true, on_start=ready, s)
-      # elsif type == "harbor" then
-      #   port = int_of_string(cnf["port"], default=8000)
-      #   mount = cnf["mount"]
+        frame_duration = get("frame.duration", default=0.04)
+        buffer_size = int_of_string(cnf["buffer_size"], default=int_of_float(2.0/frame_duration))
+        output.ao(id=id, buffer_size=buffer_size, fallible=false, on_start=ready, s)
+      elsif type == "portaudio" then
+        buflen = int_of_string(cnf["buflen"], default=16384)
+        output.portaudio(id=id, buflen=buflen, fallible=true, on_start=ready, s)
+      elsif type == "harbor" then
+        port = int_of_string(cnf["port"], default=8000)
+        mount = cnf["mount"]
 
-      #   if mount != "" then
-      #     output.harbor(id=id, on_start=ready, encoding="UTF-8", port=port, mount=mount, encoder, s)
-      #   end
+        if mount != "" then
+          encoder = get_encoder(default=default_icecast_encoder())
+          codec = fst(encoder)
+          encoder = snd(encoder)
+
+          output.harbor(id=id, on_start=ready, encoding="UTF-8", port=port, mount=mount, encoder, mksafe(pure_source(codec, s)))
+        else
+          output.dummy(s)
+        end
       elsif type == "icecast" then
         host = cnf["host"]
         port = int_of_string(cnf["port"], default=8000)
@@ -61,7 +70,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
 
           output.icecast(
             fallible=true,
-            id=id, on_start=ready, encoding="UTF-8", 
+            id=id, on_start=ready, encoding="UTF-8",
             host=host, port=port, mount=mount,
             password=password, public=public,
             description=description, genre=genre,

@@ -1,2 +1,4 @@
 #!env sh
-liquidsoap src/bodywash.liq -- $@
+SCRIPT_PATH=$(perl -e 'use Cwd "abs_path";print abs_path(shift)' $0 2>/dev/null)
+DIR=$(dirname $SCRIPT_PATH)
+liquidsoap $DIR/src/bodywash.liq -- $@
