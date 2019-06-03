@@ -32,7 +32,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
       end      
     end
 
-    samplerate = float_of_int(get("frame.audio.samplerate", default=44100))
+    samplerate = get("frame.audio.samplerate", default=44100)
     frame_duration = get("frame.duration", default=0.04)    
 
     def default_icecast_encoder()
@@ -47,7 +47,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
           s
         )
       elsif type == "portaudio" then
-        buflen = int_of_string(cnf["buflen"], default=int_of_float(samplerate * frame_duration * 3.0))
+        buflen = int_of_string(cnf["buflen"], default=int_of_float(float_of_int(samplerate) * frame_duration * 3.0))
 
         output.portaudio(id=id,
           on_start=ready,
