@@ -39,6 +39,9 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
 
   track_pos = ref 0.
   resume_track_pos = ref 0.
+  resume_file = ref ""
+
+  track = ref [("", "")]
 
   shutdown_in_progress = ref false
 
@@ -72,8 +75,9 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
 
     dump("[state]")
     dump("item_counter=#{!item_counter}")
-    dump("duration="^string_of(gettimeofday() - !sequence_started_at))
-    dump("track_pos="^string_of(!track_pos))
+    dump("duration=#{gettimeofday() - !sequence_started_at}")
+    dump("track_pos=#{!track_pos}")
+    dump("current=$(initial_uri)" % !track)
     dump("")
 
     dump("[backlog]")
@@ -330,9 +334,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     sequence.circulate()
     save_dump()
     "OK"    
-  end)
-
-  track = ref [("", "")]
+  end)  
 
   server.register(namespace=id, "track", usage="track", fun(_s) -> begin
     l = list.map(fun(e) -> "#{fst(e)}=#{snd(e)}", !track)
@@ -353,6 +355,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     item_counter := int_of_string(state["item_counter"],default=0)
     sequence_started_at := gettimeofday() - float_of_string(state["duration"],default=0.0)
     track_pos := float_of_string(state["track_pos"],default=0.0)
+    resume_file := state["current"]
 
     resume_track_pos := !track_pos
 
@@ -369,13 +372,14 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     sequence_started_at := gettimeofday()
   end
 
-  s = request.dynamic(default_duration=5.0, length=5.0, {
-    if !resume_track_pos > 0.0 then
-      current_seq = sequence.current()
-      ref_files = playlists.of(fst(current_seq))
-      last = list.last(!ref_files, default="")
-      
-      request.create(last)      
+  s = request.dynamic(id=id, default_duration=5.0, length=5.0, {
+    if !resume_file != "" then
+      print.cyan("Resuming #{!resume_file} at #{!resume_track_pos}")
+
+      last = !resume_file
+      resume_file := ""
+
+      request.create(last)
     else
       next()
     end
