@@ -24,7 +24,7 @@ def notdup(~meta_key="artist",~size=20,~backlog,m)
 end
 
 def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, uris)
-  log = log(label="playlist.multi", level=2)
+  log = log(label="playlist.multi(#{id})", level=2)
 
   artist_backlog = ref []
   backlog_size = ref size
