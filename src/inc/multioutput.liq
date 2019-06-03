@@ -14,7 +14,10 @@ def output.multi(~namespace="output", ~encoders, conf, s)
     cnf = conf.parse_detail(snd(r))
 
     type = cnf["type"]
-    id = if cnf["id"] != "" then namespace^"_"^cnf["id"] else "" end
+
+    id = cnf["id"]
+    id = if id != "" then id else name end
+    id = "#{namespace}_#{id}"
 
     def get_encoder(~default)
       encoders.lookup(cnf["encoder"], encoders, default=default)
