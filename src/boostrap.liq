@@ -39,7 +39,7 @@ def boot()
   set("server.telnet", true)
   set("server.timeout", 180.0)
   set("audio.converter.samplerate.libsamplerate.quality", "best")
-  set("frame.duration", 0.08)
+  set("frame.duration", 0.04)
 end
 
 %include "inc/conf.liq"
