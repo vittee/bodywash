@@ -34,12 +34,12 @@ multi =
     end
 
 xfader = mksafe(gapless(multi))
-# mixer = mix(id="mixer", [xfader])
+mixer = mix(id="mixer", [xfader])
 # warmup = blank(duration=0.7)
 # main = sequence(merge=true,[warmup,mixer])
 
 output.multi(
   encoders=encoders.load(conf("encoders")), 
   conf("outputs"),
-  compress(threshold=-6.0, ratio=12.0, gain=3.0, xfader)
+  compress(threshold=-6.0, ratio=12.0, gain=3.0, mixer)
 )
