@@ -1,7 +1,7 @@
 ## Installing OCaml and its package manager
 
 ```bash
-$ brew install pkg-config ocaml opam
+$ brew install pkg-config ocaml opam gnu-sed
 ```
 
 Once install, Initialize the `opam`
