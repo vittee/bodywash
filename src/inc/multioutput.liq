@@ -98,6 +98,12 @@ def output.multi(~namespace="output", ~encoders, conf, s)
         else
           output.dummy(s)
         end
+      elsif type == "ffplay" then
+        output.external(id=id, 
+          on_start=ready, 
+          flush=true, 
+          %wav, "ffplay -i - -nodisp -autoexit -v -8", s
+        )
       else
         output.dummy(s)      
       end
