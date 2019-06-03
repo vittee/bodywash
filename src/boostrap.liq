@@ -46,7 +46,6 @@ end
 %include "inc/settings.liq"
 %include "inc/multi.liq"
 %include "inc/gapless.liq"
-%include "inc/replaygain.liq"
 %include "inc/encoder.liq"
 %include "inc/multioutput.liq"
 
