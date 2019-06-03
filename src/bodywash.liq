@@ -17,6 +17,10 @@ settings = conf.settings(conf)
 s.int = settings.int(settings)
 s.bool = settings.bool(settings)
 
+if s.bool("replay_gain") then        
+  enable_replaygain_metadata()
+end
+
 multi = playlist.multi(id="ml", conf.playlists(conf), 
   sequence=conf.sequence(conf),
   dump_file="#{basename(conf_file)}.dump",
@@ -25,15 +29,7 @@ multi = playlist.multi(id="ml", conf.playlists(conf),
 )
 add_skip_command(multi)
 
-multi = 
-    if s.bool("replay_gain") then
-        enable_replaygain_metadata()
-        replaygain(multi)
-    else
-        multi
-    end
-
-xfader = mksafe(gapless(multi))
+xfader = gapless(amplify(1.0, multi, override="replay_gain"))
 mixer = mix(id="mixer", [xfader])
 # warmup = blank(duration=0.7)
 # main = sequence(merge=true,[warmup,mixer])
