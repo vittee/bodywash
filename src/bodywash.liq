@@ -29,7 +29,8 @@ multi = playlist.multi(id="ml", conf.playlists(conf),
 )
 add_skip_command(multi)
 
-xfader = gapless(amplify(1.0, multi, override="replay_gain"))
+replaygain = amplify(id="replaygain", 1.0, multi, override="replay_gain")
+xfader = gapless(id="xfader", replaygain)
 mixer = mix(id="mixer", [xfader])
 # warmup = blank(duration=0.7)
 # main = sequence(merge=true,[warmup,mixer])
