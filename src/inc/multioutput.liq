@@ -26,24 +26,34 @@ def output.multi(~namespace="output", ~encoders, conf, s)
     def pure_source(codec, s) 
       if codec == "opus" or codec == "flac" then
         print.yellow("Streaming with #{codec} codec, does not support metadata update.")
-        drop_metadata(buffer(s, buffer=0.25))
+        drop_metadata(s)
       else
         s
       end      
     end
 
+    samplerate = float_of_int(get("frame.audio.samplerate", default=44100))
+    frame_duration = get("frame.duration", default=0.04)    
+
     def default_icecast_encoder()
-      ("vorbis", encoder.vorbis(samplerate=44100,bitrate=96))
+      ("vorbis", encoder.vorbis(samplerate=samplerate,bitrate=96))
     end
 
     active_source = 
       if type == "ao" then
-        frame_duration = get("frame.duration", default=0.04)
-        buffer_size = int_of_string(cnf["buffer_size"], default=int_of_float(2.0/frame_duration))
-        output.ao(id=id, buffer_size=buffer_size, fallible=false, on_start=ready, s)
+        output.ao(id=id,           
+          on_start=ready, 
+          buffer_size=int_of_string(cnf["buffer_size"], default=4),
+          s
+        )
       elsif type == "portaudio" then
-        buflen = int_of_string(cnf["buflen"], default=16384)
-        output.portaudio(id=id, buflen=buflen, fallible=true, on_start=ready, s)
+        buflen = int_of_string(cnf["buflen"], default=int_of_float(samplerate * frame_duration * 3.0))
+
+        output.portaudio(id=id,
+          on_start=ready,
+          buflen=buflen,
+          s
+        )
       elsif type == "harbor" then
         port = int_of_string(cnf["port"], default=8000)
         mount = cnf["mount"]
@@ -53,7 +63,14 @@ def output.multi(~namespace="output", ~encoders, conf, s)
           codec = fst(encoder)
           encoder = snd(encoder)
 
-          output.harbor(id=id, on_start=ready, encoding="UTF-8", port=port, mount=mount, encoder, mksafe(pure_source(codec, s)))
+          output.harbor(id=id,  
+            on_start=ready, 
+            encoding="UTF-8", 
+            port=port, 
+            mount=mount, 
+            encoder, 
+            pure_source(codec, s)
+          )
         else
           output.dummy(s)
         end
@@ -71,9 +88,8 @@ def output.multi(~namespace="output", ~encoders, conf, s)
           codec = fst(encoder)
           encoder = snd(encoder)
 
-          output.icecast(
-            fallible=true,
-            id=id, on_start=ready, encoding="UTF-8",
+          output.icecast(id=id, 
+            on_start=ready, encoding="UTF-8",
             host=host, port=port, mount=mount,
             password=password, public=public,
             description=description, genre=genre,
