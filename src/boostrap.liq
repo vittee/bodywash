@@ -35,7 +35,7 @@ def boot()
   _audio_regex := "\.(#{list.join(!_audio_ext,separator='|')})$"
 
   set("log.stdout", true)
-  set("log.level", 2)
+  set("log.level", int_of_string(getopt("-d")) + 2)
   set("server.telnet", true)
   set("server.timeout", 180.0)
   set("audio.converter.samplerate.libsamplerate.quality", "best")
