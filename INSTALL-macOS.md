@@ -1,23 +1,43 @@
 ## Installing OCaml and its package manager
 
 ```bash
-$ brew install pkg-config ocaml opam gnu-sed
+$ brew install pkg-config ocaml opam libffi
 ```
 
 Once install, Initialize the `opam`
 ```bash
 $ opam init
+$ export PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/usr/local/opt/libffi/lib/pkgconfig"
 ```
 
 ## Installing libraries.
 ```bash
-$ opam depext pcre ogg vorbis opus theora flac mad lame faad fdkaac lo ao portaudio taglib cry yojson magic samplerate
-$ opam install ogg vorbis opus theora flac mad lame faad fdkaac lo ao portaudio taglib cry yojson magic samplerate
+$ opam depext pcre ogg vorbis opus theora flac mad lame faad fdkaac lo ao portaudio taglib cry yojson magic samplerate gstreamer frei0r
+$ opam install ogg vorbis opus theora flac mad lame faad fdkaac lo ao portaudio taglib cry yojson magic samplerate gstreamer frei0r
 ```
+
+## LADSPA (Optional)
+```bash
+$ opam depext ladspa
+$ opam install ladspa
+```
+
+### Install LADSPA Plugins
+```bash
+$ brew install gettext fftw
+$ export PATH=${PATH}:/usr/local/opt/gettext/bin
+$ git clone https://github.com/swh/ladspa.git
+$ cd ladspa
+$ autoreconf -i
+$ ./configure
+$ make
+$ make install
+```
+TODO: TAP, CMT
 
 ## Install liquidsoap
 ```bash
-$ opam install liquidsoap
+$ opam install liquidsoap gnu-sed
 ```
 
 ## Make it available
