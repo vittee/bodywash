@@ -104,6 +104,14 @@ def output.multi(~namespace="output", ~encoders, conf, s)
           flush=true,
           %wav, "ffplay -i - -nodisp -autoexit -v -8", s
         )
+      %ifdef output.gstreamer.audio
+      elsif type == "gstreamer" then
+        output.gstreamer.audio(
+          on_start=ready,
+          pipeline="queue ! autoaudiosink",
+          s
+        )
+      %endif
       else
         output.dummy(s)
       end
