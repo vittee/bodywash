@@ -48,5 +48,6 @@ end
 %include "inc/gapless.liq"
 %include "inc/encoder.liq"
 %include "inc/multioutput.liq"
+%include "inc/karaoke.liq"
 
 boot()

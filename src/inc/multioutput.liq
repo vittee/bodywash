@@ -5,7 +5,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
   def ready()
     ready_count := !ready_count + 1
     if !ready_count == list.length(!result) then
-      ignore(server.execute("mixer.select 0 true"))
+      ignore(server.execute("main_out.select 0 true"))
     end
   end
 

@@ -30,13 +30,25 @@ multi = playlist.multi(id="ml", conf.playlists(conf),
 add_skip_command(multi)
 
 replaygain = amplify(id="replaygain", 1.0, multi, override="replay_gain")
-xfader = gapless(id="xfader", replaygain)
-mixer = mix(id="mixer", [xfader])
-# warmup = blank(duration=0.7)
-# main = sequence(merge=true,[warmup,mixer])
+player = gapless(id="gapless", replaygain)
+
+karaoke_on = interactive.bool("karaoke", false)
+karaoke_switch = switch(track_sensitive=false, [
+  (karaoke_on, karaoke(player, vocal_volume=-18.0)),
+  ({not karaoke_on()}, player)
+])
+
+# off vocal [-1.0] --- mixed [0.0] --- full vocal [1.0]
+xfader_getter = interactive.float("xfader", -1.)
+xfader = add([  
+  amplify({ 1. - (clamp(xfader_getter(), -1., 1.) + 1.) / 2. }, karaoke_switch),
+  amplify({ (clamp(xfader_getter(), -1., 1.) + 1.) / 2. }, player)
+])
+
+main_out = mix(id="main_out", [xfader])
 
 output.multi(
-  encoders=encoders.load(conf("encoders")), 
+  encoders=encoders.load(conf("encoders")),
   conf("outputs"),
-  compress(threshold=-6.0, ratio=12.0, gain=3.0, mixer)
+  compress(threshold=-6.0, ratio=12.0, gain=3.0, mksafe(main_out))
 )
