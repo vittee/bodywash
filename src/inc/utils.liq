@@ -57,3 +57,13 @@ def list.movef(a,~index,~default)
   item = list.nth(a,index,default=default)
   list.add(item,list.filter(fun(e) -> e != item,a))
 end
+
+def clamp(v,min,max)
+  if v < min then
+    min
+  elsif v > max then
+    max
+  else
+    v
+  end
+end
