@@ -23,26 +23,26 @@ def output.multi(~namespace="output", ~encoders, conf, s)
       encoders.lookup(cnf["encoder"], encoders, default=default)
     end
 
-    def pure_source(codec, s) 
+    def pure_source(codec, s)
       if codec == "opus" or codec == "flac" then
         print.yellow("Streaming with #{codec} codec, does not support metadata update.")
         drop_metadata(s)
       else
         s
-      end      
+      end
     end
 
     samplerate = get("frame.audio.samplerate", default=44100)
-    frame_duration = get("frame.duration", default=0.04)    
+    frame_duration = get("frame.duration", default=0.04)
 
     def default_icecast_encoder()
       ("vorbis", encoder.vorbis(samplerate=samplerate,bitrate=96))
     end
 
-    active_source = 
+    active_source =
       if type == "ao" then
-        output.ao(id=id,           
-          on_start=ready, 
+        output.ao(id=id,
+          on_start=ready,
           buffer_size=int_of_string(cnf["buffer_size"], default=4),
           s
         )
@@ -63,12 +63,12 @@ def output.multi(~namespace="output", ~encoders, conf, s)
           codec = fst(encoder)
           encoder = snd(encoder)
 
-          output.harbor(id=id,  
-            on_start=ready, 
-            encoding="UTF-8", 
-            port=port, 
-            mount=mount, 
-            encoder, 
+          output.harbor(id=id,
+            on_start=ready,
+            encoding="UTF-8",
+            port=port,
+            mount=mount,
+            encoder,
             pure_source(codec, s)
           )
         else
@@ -78,17 +78,17 @@ def output.multi(~namespace="output", ~encoders, conf, s)
         host = cnf["host"]
         port = int_of_string(cnf["port"], default=8000)
         mount = cnf["mount"]
-        password = cnf["password"]      
+        password = cnf["password"]
         public = bool_of_string(cnf["public"], default=false)
         description = cnf["description"]
-        genre = cnf["genre"]      
+        genre = cnf["genre"]
 
         if mount != "" then
           encoder = get_encoder(default=default_icecast_encoder())
           codec = fst(encoder)
           encoder = snd(encoder)
 
-          output.icecast(id=id, 
+          output.icecast(id=id,
             on_start=ready, encoding="UTF-8",
             host=host, port=port, mount=mount,
             password=password, public=public,
@@ -99,13 +99,13 @@ def output.multi(~namespace="output", ~encoders, conf, s)
           output.dummy(s)
         end
       elsif type == "ffplay" then
-        output.external(id=id, 
-          on_start=ready, 
-          flush=true, 
+        output.external(id=id,
+          on_start=ready,
+          flush=true,
           %wav, "ffplay -i - -nodisp -autoexit -v -8", s
         )
       else
-        output.dummy(s)      
+        output.dummy(s)
       end
 
     result := list.push(!result, active_source)
