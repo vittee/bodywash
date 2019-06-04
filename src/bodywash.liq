@@ -31,7 +31,9 @@ add_skip_command(multi)
 
 replaygain = amplify(id="replaygain", 1.0, multi, override="replay_gain")
 player = gapless(id="gapless", replaygain)
+patch = player
 
+%ifdef ladspa.karaoke
 karaoke_on = interactive.bool("karaoke", false)
 karaoke_switch = switch(track_sensitive=false, [
   (karaoke_on, karaoke(player, vocal_volume=-18.0)),
@@ -44,8 +46,10 @@ xfader = add([
   amplify({ 1. - (clamp(xfader_getter(), -1., 1.) + 1.) / 2. }, karaoke_switch),
   amplify({ (clamp(xfader_getter(), -1., 1.) + 1.) / 2. }, player)
 ])
+patch = xfader
+%endif
 
-main_out = mix(id="main_out", [xfader])
+main_out = mix(id="main_out", [patch])
 
 output.multi(
   encoders=encoders.load(conf("encoders")),
