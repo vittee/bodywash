@@ -198,7 +198,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     if force or notdup(backlog=artist_backlog, size=!backlog_size, meta) then
       next_tried := 0
       item_counter := !item_counter + 1
-      print.green("$(artist) - $(title)" % meta)
+      print.yellow("Queuing: $(artist) - $(title)" % meta)
       req
     else
       if !next_tried < !backlog_size then
@@ -416,6 +416,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
   load_playlists()
 
   source.out = on_track(id=id, fun(m) -> begin
+    print.green("Playing: $(artist) - $(title)" % m)
     track := m
     if auto_resume and !resume_track_pos > 0.0 then
       track_pos := !resume_track_pos
