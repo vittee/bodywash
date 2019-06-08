@@ -34,7 +34,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
   sequence_started_at = ref 0.
   pl_sequences = ref [("", 0.)] # mutable list of, pair<listname, duration>
 
-  # TODO: Remove item_counter, it causes confusion.
   item_counter = ref 0
 
   track_pos = ref 0.
