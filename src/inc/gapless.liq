@@ -1,9 +1,8 @@
 def gapless(s,~id="")
   log = log(label="gapless", level=2)
 
-  high = -10.0
   medium = -30.0
-  margin = 4.0  
+  margin = 4.0
 
   ending = ref false
 
@@ -22,27 +21,44 @@ def gapless(s,~id="")
     ending := false
   end, se)
 
+  cross_duration = 2.5
+
   add = fun(a,b) -> add(normalize=false,[b,a])
-  fout = fade.out(type="exp",duration=1.7)
-  ffout = fade.out(type="exp",duration=0.85)
-  add.out = fun(a,b) -> add(fout(a), b)
-  fast.out = fun(a,b) -> add(ffout(a), b)
+  soon = fade.out(type="exp",duration=cross_duration*0.88) # Start fading sooner
+  late = fade.out(type="exp",duration=cross_duration*0.4) # Start fading lately
+
+  out.soon = fun(a,b) -> add(soon(a), b)
+  out.late = fun(a,b) -> add(late(a), b)
 
   def transition(a,b,ma,mb,sa,sb)
-      if a < medium + margin then
-        fast.out(sa, sb)
-      elsif a <= medium and b <= medium and abs(a - b) <= margin then
-        add.out(sa, sb)
-      elsif b >= a + margin and a >= medium and b <= high then        
-        add.out(sa, sb)
-      elsif a >= b + margin and b >= medium and a <= high then
-        add(sa, sb)
-      elsif b >= a + margin and a <= medium and b <= high then
-        add(sa, sb)
+    sooner =
+      if (a - b) >= 12.0 then
+        true
+      elsif abs(a - b) < 12.0 then
+        true
       else
-        add.out(sa, sb)
+        false
       end
+
+    f =
+      if sooner then
+        print.purple("Crossfade: Sooner")
+        out.soon
+      else
+        print.purple("Crossfade: Later")
+        out.late
+      end
+
+    f(sa, sb)
   end
 
-  cross(transition, width=0.5, duration=3.0, eat_blank(at_beginning=true, st))
+  %ifdef cross
+    x = cross
+  %endif
+
+  %ifdef smart_cross
+    x = smart_cross
+  %endif
+
+  x(id=id, transition, width=0.7, duration=cross_duration, eat_blank(at_beginning=true,st))
 end
