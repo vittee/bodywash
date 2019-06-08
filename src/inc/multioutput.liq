@@ -119,5 +119,5 @@ def output.multi(~namespace="output", ~encoders, conf, s)
     result := list.push(!result, active_source)
   end, conf)
 
-  !result
+  ignore(!result)
 end
