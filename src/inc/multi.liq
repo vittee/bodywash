@@ -380,7 +380,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     sequence_started_at := gettimeofday()
   end
 
-  s = request.dynamic(id=id, default_duration=5.0, length=5.0, {
+  s = request.dynamic(id=id, default_duration=5.0, length=10.0, {
     if !resume_file != "" then
       print.cyan("Resuming #{!resume_file} at #{!resume_track_pos}")
 
@@ -393,21 +393,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     end
   })
 
-  def identity_volume()
-    1.
-  end  
-
-  # TODO: create a fader function based on the new mkfade() API
-  # fade_volume = mkfade(type="exp", start=1.0, stop=0.0, duration=0.66, s)
-
-  fader = ref identity_volume  
-
-  server.register(namespace=id, "out", usage="out", description="Fade out", fun(_s) -> begin
-    # TODO: assign the fader
-    # fader := fade_volume
-    "Not Implemented"
-  end)
-
   source.on_shutdown(s, {
     shutdown_in_progress := true
     save_dump()
@@ -415,7 +400,6 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
 
   last_track_remaining = ref 0.0
   add_timeout(fast=true, 0.1, {
-    # TODO: Use new source.time() API
     remaining = source.remaining(s)
     if remaining != !last_track_remaining then
       track_pos := !track_pos + 0.1
@@ -442,9 +426,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       track_pos := 0.0
       save_dump()
     end
-
-    fader := identity_volume
   end, s)
 
-  amplify(id=id, override="", !fader, source.out)
+  source.out
 end
