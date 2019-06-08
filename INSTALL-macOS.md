@@ -26,12 +26,20 @@ $ opam install ladspa
 ```bash
 $ brew install gettext fftw
 $ export PATH=${PATH}:/usr/local/opt/gettext/bin
+
 $ git clone https://github.com/swh/ladspa.git
 $ cd ladspa
 $ autoreconf -i
 $ ./configure
 $ make
 $ make install
+
+$ wget http://quitte.de/dsp/caps_0.9.26.tar.bz2
+$ tar xvf caps_0.9.26.tar.bz2
+$ cd caps_0.9.26
+$ ./configure.py
+$ make
+$ install -m 644 caps.so /usr/local/lib/ladspa/
 ```
 TODO: TAP, CMT
 
