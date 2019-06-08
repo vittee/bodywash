@@ -108,7 +108,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
       elsif type == "gstreamer" then
         output.gstreamer.audio(id=id,
           on_start=ready,
-          pipeline="queue ! autoaudiosink",
+          pipeline="audioconvert ! queue ! autoaudiosink",
           s
         )
       %endif
