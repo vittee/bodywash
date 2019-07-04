@@ -570,7 +570,7 @@ def encoders.predefined()
   list.fold(fun(a,g) -> begin
     let (codec, configs) = g
     
-    mapped = list.map(fun(e) -> begin)
+    mapped = list.map(fun(e) -> begin
       (fst(e), (codec, snd(e)))
     end, configs)
 
