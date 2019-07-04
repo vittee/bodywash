@@ -10,8 +10,8 @@ def output.multi(~namespace="output", ~encoders, conf, s)
   end
 
   list.iter(fun(r) -> begin
-    name = fst(r)
-    cnf = conf.parse_detail(snd(r))
+    let (name, detail) = r
+    cnf = conf.parse_detail(detail)
 
     type = cnf["type"]
 
@@ -62,9 +62,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
         mount = cnf["mount"]
 
         if mount != "" then
-          encoder = get_encoder(default=default_icecast_encoder())
-          codec = fst(encoder)
-          encoder = snd(encoder)
+          let (codec, encoder) = get_encoder(default=default_icecast_encoder())
 
           output.harbor(id=id,
             on_start=ready,
@@ -87,9 +85,7 @@ def output.multi(~namespace="output", ~encoders, conf, s)
         genre = cnf["genre"]
 
         if mount != "" then
-          encoder = get_encoder(default=default_icecast_encoder())
-          codec = fst(encoder)
-          encoder = snd(encoder)
+          let (codec, encoder) = get_encoder(default=default_icecast_encoder())
 
           output.icecast(id=id,
             on_start=ready, encoding="UTF-8",

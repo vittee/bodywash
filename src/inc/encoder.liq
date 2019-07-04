@@ -568,12 +568,11 @@ def encoders.predefined()
   end, groups)
 
   list.fold(fun(a,g) -> begin
-    codec = fst(g)
-    list = snd(g)
+    let (codec, configs) = g
     
-    mapped = list.map(fun(e) -> begin
+    mapped = list.map(fun(e) -> begin)
       (fst(e), (codec, snd(e)))
-    end, list)
+    end, configs)
 
     list.append(a, mapped)
   end, [], groups)
