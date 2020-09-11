@@ -82,7 +82,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
 
     dump("[state]")
     dump("item_counter=#{!item_counter}")
-    dump("duration=#{gettimeofday() - !sequence_started_at}")
+    dump("duration=#{time() - !sequence_started_at}")
     dump("track_pos=#{!track_pos}")
     dump("current=$(initial_uri)" % !track)
     dump("")
@@ -155,7 +155,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       save_dump()
     end
 
-    sequence_started_at := gettimeofday()
+    sequence_started_at := time()
     item_counter := 0
   end
 
@@ -167,7 +167,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     seq_timeout = snd(current_seq)
     pl = playlists.of(pl_name)
 
-    duration = (gettimeofday() - !sequence_started_at) / 60.
+    duration = (time() - !sequence_started_at) / 60.
     log("Playlist played for #{duration}, Sequence Limit = #{seq_timeout}")
 
     end_of_playlist = !item_counter >= list.length(!pl)
@@ -360,7 +360,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     state = d("state")
 
     item_counter := int_of_string(state["item_counter"],default=0)
-    sequence_started_at := gettimeofday() - float_of_string(state["duration"],default=0.0)
+    sequence_started_at := time() - float_of_string(state["duration"],default=0.0)
     track_pos := float_of_string(state["track_pos"],default=0.0)
     resume_file := state["current"]
 
@@ -376,7 +376,7 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       (name, ref list.map(snd, d("*p:#{name}")))
     end, d("playlists"))
   else
-    sequence_started_at := gettimeofday()
+    sequence_started_at := time()
   end
 
   s = request.dynamic(id=id, default_duration=5.0, length=10.0, {
