@@ -39,7 +39,7 @@ player = gapless(id="gapless", replaygain)
 %ifdef ladspa.karaoke
   karaoke_on = interactive.bool("karaoke", false)
   karaoke_switch = switch(track_sensitive=false, [
-    (karaoke_on, karaoke(player, vocal_volume=-18.0)),
+    (karaoke_on, karaoke(player, vocal_volume=-40.0)),
     ({not karaoke_on()}, player)
   ])
 
