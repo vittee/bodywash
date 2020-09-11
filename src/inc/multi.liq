@@ -59,7 +59,7 @@ def playlist.multi(
             if os.type == "Win32" then
               "dir #{uri} /s/b/a-d/on"
             else
-              "find #{quote(uri)} -type f | sort"
+              "find #{string.quote(uri)} -type f | sort"
             end
 
           get_process_lines(cmd)

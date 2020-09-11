@@ -1,6 +1,11 @@
-%ifdef ladspa.karaoke
-def karaoke(~vocal_volume=-18.0, s)  
-  off_vocal = ladspa.karaoke(s, vocal_volume=vocal_volume)
+def karaoke(~vocal_volume=-18.0, s)
+  %ifdef ladspa.karaoke
+    off_vocal = ladspa.karaoke(s, vocal_volume=vocal_volume)
+  %endif
+
+  %ifndef ladspa.karaoke
+    off_vocal = s
+  %endif
 
 
 
@@ -14,4 +19,3 @@ def karaoke(~vocal_volume=-18.0, s)
     )
   )
 end
-%endif
