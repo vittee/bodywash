@@ -23,7 +23,15 @@ def notdup(~meta_key="artist",~size=20,~backlog,m)
     end
 end
 
-def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, uris)
+def playlist.multi(
+  ~id,~sequence=[],~size=20, 
+  ~dump_file="", 
+  ~auto_resume=true, 
+  ~track_callback=fun(m,p) -> begin () end,
+  ~pos_callback=fun(p) -> begin () end,
+  uris
+) =
+
   log = log(label="playlist.multi(#{id})", level=2)
 
   artist_backlog = ref []
@@ -397,14 +405,16 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
     save_dump()
   })
 
-  last_track_remaining = ref 0.0
+  play_time = ref source.time(s)
   add_timeout(fast=true, 0.1, {
-    remaining = source.remaining(s)
-    if remaining != !last_track_remaining then
-      track_pos := !track_pos + 0.1
-    end
+    source_time = source.time(s)
+    delta = source_time - !play_time
 
-    last_track_remaining := remaining
+    if delta != 0.0 then # Playing
+      play_time := source_time
+      track_pos := !track_pos + 0.1 # But use 100ms here according to timer
+      pos_callback(!track_pos)
+    end
 
     if !shutdown_in_progress then
       -1.0
@@ -426,6 +436,11 @@ def playlist.multi(~id,~sequence=[],~size=20, ~dump_file="", ~auto_resume=true, 
       track_pos := 0.0
       save_dump()
     end
+
+    add_timeout(fast=true, 0.1, {
+      track_callback(!track, track_pos)
+      (-1.0)
+    })
   end, s)
 
   source.out
