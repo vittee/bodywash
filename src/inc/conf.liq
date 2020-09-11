@@ -10,7 +10,7 @@ def conf.load(file)
   name = ref ""
 
   fp = list.fold(fun(rows, l) -> begin
-      sm = string.extract(pattern="\\[(.+)\\]", l)
+      sm = string.extract(pattern="^\\[(.+)\\]$", l)
 
       if list.mem_assoc("1", sm) then
           name := sm["1"]
@@ -25,7 +25,7 @@ def conf.load(file)
       end
   end, [], lines)
 
-  fun(n) -> list.map(fun(f) -> snd(f), list.filter(fun(f) -> fst(f) == n, fp))
+  fun(n) -> list.map(snd, list.filter(fun(f) -> fst(f) == n, fp))
 end
 
 def conf.settings(conf)
