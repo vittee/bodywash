@@ -78,5 +78,5 @@ main_out = mix(id="main_out", [patch])
 output.multi(
   encoders=encoders.load(conf("encoders")),
   conf("outputs"),
-  compress(threshold=-6.0, ratio=12.0, gain=3.0, mksafe(main_out))
+  compress(threshold=-9.0, ratio=9.0, gain=2.0, mksafe(main_out))
 )
