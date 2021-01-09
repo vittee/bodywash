@@ -57,7 +57,7 @@ def playlist.multi(
         if file.is_directory(uri) then
           cmd = 
             if os.type == "Win32" then
-              "dir #{uri} /s/b/a-d/on"
+              "dir \"#{uri}\" /s/b/a-d/on"
             else
               "find #{string.quote(uri)} -type f | sort"
             end
