@@ -44,9 +44,12 @@ def output.multi(~namespace="output", ~encoders, conf, s)
 
     active_source =
       if type == "ao" then
+        dev=cnf["dev"]
+        options=if dev != "" then [("id", dev)] else [] end
         output.ao(id=id,
           on_start=ready,
           buffer_size=int_of_string(cnf["buffer_size"], default=4),
+          options=options,
           bus_source
         )
       elsif type == "portaudio" then
